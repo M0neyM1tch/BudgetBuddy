@@ -1,9 +1,8 @@
 export const FREE_LIMIT = 50;
 
-export const API_BASE = import.meta.env.VITE_API_URL;
-if (!API_BASE) {
-  throw new Error('VITE_API_URL environment variable is required');
-}
+// Not needed - using Supabase directly
+// export const API_BASE = import.meta.env.VITE_API_URL;
+
 
 export const DEFAULT_CATEGORIES = ['Income', 'Expenses', 'Savings'];
 
