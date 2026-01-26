@@ -1,0 +1,997 @@
+/* Dark Background for App Container */
+.transactions-container {
+  background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+  border-radius: 16px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+  color: #e8eaed;
+}
+
+/* Headings - Bright and Eye-Catching */
+.transactions-container h2 {
+  color: #00d9ff;
+  margin-bottom: 12px;
+  font-size: 2.4rem;
+  font-weight: 700;
+  text-shadow: 0 2px 8px rgba(0, 217, 255, 0.4);
+  letter-spacing: 0.5px;
+}
+
+.transactions-container h3 {
+  color: #00ffa3;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  margin-top: 40px;
+  font-weight: 600;
+  text-shadow: 0 2px 6px rgba(0, 255, 163, 0.3);
+}
+
+/* Section dividers */
+.section-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00d9ff, transparent);
+  margin: 36px 0;
+}
+
+/* ✨ GLASSMORPHISM SECTIONS */
+.primary-section {
+  background: rgba(30, 40, 71, 0.7);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(0, 255, 163, 0.3);
+  border-radius: 14px;
+  padding: 28px 32px;
+  margin-bottom: 36px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated gradient background */
+.primary-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(0, 255, 163, 0.1) 0%,
+    transparent 50%
+  );
+  animation: rotateGradient 15s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes rotateGradient {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Apply same style to recurring section */
+.primary-section:nth-of-type(2) {
+  border-color: rgba(0, 217, 255, 0.3);
+}
+
+.primary-section:nth-of-type(2)::before {
+  background: radial-gradient(
+    circle,
+    rgba(0, 217, 255, 0.1) 0%,
+    transparent 50%
+  );
+}
+
+/* Ensure content stays above animated background */
+.primary-section > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* SECONDARY SECTION - CSV Upload */
+.secondary-section {
+  background: rgba(30, 40, 71, 0.5);
+  border: 1px solid #3a4a6a;
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-top: 48px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.secondary-section h3 {
+  font-size: 1.15rem;
+  color: #7a8aaa;
+  margin-bottom: 16px;
+  margin-top: 0;
+}
+
+/* Form layouts - Keep buttons inline */
+.transaction-form,
+.recurring-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+/* Inputs & Selects - High Contrast */
+.transaction-form input,
+.transaction-form select,
+.recurring-form input,
+.recurring-form select {
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 2px solid #3a4a6a;
+  background: #161d35;
+  color: #ffffff;
+  min-width: 140px;
+  flex: 0 1 auto;
+  font-size: 1.05rem;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.transaction-form input[type="text"],
+.transaction-form input[type="number"],
+.recurring-form input[type="text"],
+.recurring-form input[type="number"] {
+  min-width: 120px;
+  max-width: 150px;
+}
+
+.transaction-form input[type="date"] {
+  min-width: 140px;
+  max-width: 160px;
+}
+
+.recurring-form input[type="date"] {
+  min-width: 160px;
+}
+
+.transaction-form select,
+.recurring-form select {
+  min-width: 140px;
+  max-width: 160px;
+}
+
+.transaction-form input:focus,
+.transaction-form select:focus,
+.recurring-form input:focus,
+.recurring-form select:focus {
+  border-color: #00ffa3;
+  background: #1a2440;
+  outline: none;
+  box-shadow: 0 0 12px rgba(0, 255, 163, 0.3);
+}
+
+.transaction-form input::placeholder,
+.recurring-form input::placeholder {
+  color: #7a8aaa;
+  font-weight: 400;
+}
+
+/* PRIMARY ACTION BUTTONS */
+.transaction-form button,
+.recurring-form button {
+  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+  color: #0a1628;
+  border: none;
+  border-radius: 10px;
+  padding: 13px 28px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.25s;
+  box-shadow: 0 4px 16px rgba(0, 255, 136, 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.transaction-form button:hover,
+.recurring-form button:hover {
+  background: linear-gradient(135deg, #00ffaa 0%, #00ee7a 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0, 255, 163, 0.5);
+}
+
+/* CSV Upload section styling */
+.csv-upload-container {
+  background: rgba(30, 40, 71, 0.3);
+  border: 1px dashed #3a4a6a;
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 600px;
+}
+
+.csv-upload-container select {
+  background: #161d35;
+  border: 2px solid #3a4a6a;
+  border-radius: 7px;
+  padding: 11px 16px;
+  color: #d0e0ff;
+  font-weight: 500;
+  font-size: 1rem;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.csv-upload-container select:focus {
+  outline: none;
+  border-color: #00d9ff;
+  background: #1a2440;
+}
+
+.csv-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.csv-upload input[type="file"] {
+  padding: 10px 14px;
+  color: #d0e0ff;
+  background: #161d35;
+  border: 1px solid #3a4a6a;
+  border-radius: 7px;
+  font-weight: 400;
+  font-size: 0.95rem;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.csv-upload input[type="file"]:hover {
+  border-color: #00d9ff;
+  background: #1a2440;
+}
+
+.upload-hint {
+  color: #7a8aaa;
+  font-size: 0.88rem;
+  margin-top: 4px;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* CSV Batches section */
+.csv-batches-wrapper {
+  margin-top: 24px;
+  max-width: 600px;
+}
+
+.csv-batch {
+  display: flex;
+  background: rgba(30, 40, 71, 0.6);
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #3a4a6a;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  color: #b0c0dd;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+.csv-batch:hover {
+  background: rgba(30, 40, 71, 0.8);
+  border-color: #4a5a7a;
+}
+
+.csv-batch span {
+  flex: 1;
+  margin-right: 16px;
+}
+
+.csv-batch button {
+  background: #ff4757;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.csv-batch button:hover {
+  background: #ff6b7a;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3);
+}
+
+/* Search Bar - Prominent */
+.search-input {
+  width: 100%;
+  max-width: 450px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  border: 2px solid #3a4a6a;
+  background: #161d35;
+  color: #ffffff;
+  font-size: 1.1rem;
+  margin-bottom: 24px;
+  transition: all 0.3s;
+  font-weight: 500;
+}
+
+.search-input::placeholder {
+  color: #7a8aaa;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #00d9ff;
+  background: #1a2440;
+  box-shadow: 0 0 16px rgba(0, 217, 255, 0.3);
+}
+
+/* ==========================================
+   ✨ CLEAN MODERN TRANSACTION TABLE
+========================================== */
+
+.transaction-table {
+  width: 100%;
+  background: transparent;
+  border-radius: 10px;
+  margin-top: 24px;
+  margin-bottom: 40px;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+}
+
+/* Header styling - cleaner */
+.transaction-table th {
+  background: rgba(30, 40, 71, 0.6);
+  color: #00d9ff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  padding: 16px 20px;
+  text-align: left;
+  border-bottom: 2px solid rgba(0, 217, 255, 0.3);
+}
+
+.transaction-table th:first-child {
+  border-top-left-radius: 10px;
+}
+
+.transaction-table th:last-child {
+  border-top-right-radius: 10px;
+}
+
+.transaction-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.transaction-table th.sortable:hover {
+  color: #00ffa3;
+  background: rgba(30, 40, 71, 0.8);
+}
+
+/* ✨ Clean, minimal rows */
+.transaction-table td {
+  padding: 16px 20px;
+  color: #e8eaed;
+  font-size: 1rem;
+  font-weight: 400;
+  background: rgba(30, 40, 71, 0.3);
+  border-bottom: 1px solid rgba(75, 85, 99, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Remove the ugly gradients and use subtle left accent */
+.transaction-row td {
+  border-left: 3px solid transparent;
+}
+
+/* Cleaner hover effect */
+.transaction-table tbody tr:hover td {
+  background: rgba(30, 40, 71, 0.6);
+  transform: translateX(4px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ✨ Category-specific accents - SUBTLE */
+.transaction-row.income-row td {
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.transaction-row.income-row:hover td {
+  background: rgba(16, 185, 129, 0.15);
+  border-left-color: #00ff88;
+}
+
+.transaction-row.expense-row td {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.transaction-row.expense-row:hover td {
+  background: rgba(239, 68, 68, 0.15);
+  border-left-color: #ff4757;
+}
+
+.transaction-row.savings-row td {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.transaction-row.savings-row:hover td {
+  background: rgba(59, 130, 246, 0.15);
+  border-left-color: #00aaff;
+}
+
+.transaction-row.goal-row td {
+  background: rgba(251, 191, 36, 0.08);
+}
+
+.transaction-row.goal-row:hover td {
+  background: rgba(251, 191, 36, 0.15);
+  border-left-color: #ffcc00;
+}
+
+/* ✨ Clean, modern category badges */
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: capitalize;
+  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
+}
+
+.income-badge {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.savings-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.goal-badge {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+.expense-badge {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+
+
+/* Edit mode buttons */
+.edit-btn {
+  background: #2196f3 !important;
+  color: white !important;
+  border: none;
+  padding: 8px 14px;
+  margin-right: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.edit-btn:hover {
+  background: #0b7dda !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
+}
+
+.save-btn {
+  background: #4caf50 !important;
+  color: white !important;
+  border: none;
+  padding: 8px 14px;
+  margin-right: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.save-btn:hover {
+  background: #45a049 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
+}
+
+.cancel-btn {
+  background: #9e9e9e !important;
+  color: white !important;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.cancel-btn:hover {
+  background: #757575 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(158, 158, 158, 0.4);
+}
+
+.delete-btn {
+  background: #ff4757 !important;
+  color: white !important;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.delete-btn:hover {
+  background: #ff6b7a !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 71, 87, 0.4);
+}
+
+/* Edit mode inputs */
+.edit-input {
+  width: 100% !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+  border: 2px solid #3a4a6a !important;
+  background: #161d35 !important;
+  color: #fff !important;
+  font-size: 0.95rem !important;
+  font-family: inherit !important;
+  transition: all 0.2s !important;
+}
+
+.edit-input:focus {
+  outline: none !important;
+  border-color: #00ffa3 !important;
+  box-shadow: 0 0 8px rgba(0, 255, 163, 0.3) !important;
+}
+
+.transaction-table td {
+  vertical-align: middle;
+}
+
+/* Recurring icon */
+.recurring-icon {
+  font-size: 1.1em;
+  animation: glow 2s ease-in-out infinite;
+  display: inline-block;
+  margin-left: 6px;
+}
+
+@keyframes glow {
+  0%, 100% {
+    text-shadow: 0 0 5px #2196F3, 0 0 10px #2196F3;
+  }
+  50% {
+    text-shadow: 0 0 10px #2196F3, 0 0 20px #2196F3, 0 0 30px #2196F3;
+  }
+}
+
+/* Error messages */
+.error {
+  color: #ff6b7a;
+  margin: 12px 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .transactions-container {
+    padding: 24px 18px;
+  }
+
+  .transaction-form,
+  .recurring-form {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .transaction-form input,
+  .transaction-form select,
+  .recurring-form input,
+  .recurring-form select,
+  .transaction-form button,
+  .recurring-form button {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  .primary-section,
+  .secondary-section {
+    padding: 20px 16px;
+  }
+
+  .csv-upload-container,
+  .csv-batches-wrapper {
+    max-width: 100%;
+  }
+
+  .csv-batch {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .csv-batch button {
+    width: 100%;
+  }
+  
+  .transaction-table th,
+  .transaction-table td {
+    padding: 12px 14px;
+    font-size: 0.9rem;
+  }
+}
+/* ✨ MAXIMUM TEXT VISIBILITY VERSION */
+
+.transaction-table td {
+  padding: 20px 22px;
+  color: #ffffff;  /* Pure white */
+  font-size: 1.1rem;  /* Larger */
+  font-weight: 600;  /* Semi-bold for all text */
+  background: rgba(30, 40, 71, 0.3);
+  border-bottom: 1px solid rgba(75, 85, 99, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  line-height: 1.5;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);  /* Subtle shadow for all text */
+}
+
+/* Description - extra bold */
+.transaction-table td:nth-child(2) {
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0.2px;
+}
+
+/* Amount - very prominent */
+/* ✨ Enhanced Amount Display with Category-Based Glows */
+.amount {
+  font-weight: 500;
+  font-size: 1.25rem;
+  letter-spacing: 0.5px;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+/* Income - Subtle Green Glow */
+.amount-income {
+  color: #10b981;
+  text-shadow: 
+    0 0 8px rgba(16, 185, 129, 0.3),
+    0 0 12px rgba(16, 185, 129, 0.2);
+}
+
+.transaction-row.income-row:hover .amount-income {
+  color: #34d399;
+  text-shadow: 
+    0 0 12px rgba(16, 185, 129, 0.5),
+    0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+/* Expense - Subtle Red Glow */
+.amount-expense {
+  color: #ef4444;
+  text-shadow: 
+    0 0 8px rgba(239, 68, 68, 0.3),
+    0 0 12px rgba(239, 68, 68, 0.2);
+}
+
+.transaction-row.expense-row:hover .amount-expense {
+  color: #f87171;
+  text-shadow: 
+    0 0 12px rgba(239, 68, 68, 0.5),
+    0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+/* Savings/Goals - Subtle Yellow/Gold Glow */
+.amount-savings {
+  color: #fbbf24;
+  text-shadow: 
+    0 0 8px rgba(251, 191, 36, 0.3),
+    0 0 12px rgba(251, 191, 36, 0.2);
+}
+
+.transaction-row.savings-row:hover .amount-savings,
+.transaction-row.goal-row:hover .amount-savings {
+  color: #fcd34d;
+  text-shadow: 
+    0 0 12px rgba(251, 191, 36, 0.5),
+    0 0 20px rgba(251, 191, 36, 0.3);
+}
+
+/* Keep backwards compatibility for old positive/negative classes */
+.amount.positive {
+  color: #10b981;
+  text-shadow: 
+    0 0 8px rgba(16, 185, 129, 0.3),
+    0 0 12px rgba(16, 185, 129, 0.2);
+}
+
+.amount.negative {
+  color: #ef4444;
+  text-shadow: 
+    0 0 8px rgba(239, 68, 68, 0.3),
+    0 0 12px rgba(239, 68, 68, 0.2);
+}
+
+
+/* Date - bold */
+.transaction-table td:first-child {
+  font-weight: 700;
+  color: #f3f4f6;
+  font-size: 1.05rem;
+}
+
+/* Category badges - more prominent */
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-transform: capitalize;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);  /* Add depth */
+}
+
+/* Make emojis slightly larger */
+.category-badge::before {
+  font-size: 1.1em;
+}
+/* ==========================================
+   📱 MOBILE RESPONSIVE OPTIMIZATION
+========================================== */
+
+@media (max-width: 768px) {
+  /* Container adjustments */
+  .transactions-container {
+    padding: 20px 14px;
+    border-radius: 12px;
+  }
+
+  /* Headings - smaller on mobile */
+  .transactions-container h2 {
+    font-size: 1.8rem;
+    margin-bottom: 16px;
+  }
+
+  .transactions-container h3 {
+    font-size: 1.3rem;
+    margin-bottom: 16px;
+    margin-top: 30px;
+  }
+
+  /* Forms stack vertically */
+  .transaction-form,
+  .recurring-form {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .transaction-form input,
+  .transaction-form select,
+  .recurring-form input,
+  .recurring-form select,
+  .transaction-form button,
+  .recurring-form button {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  /* Sections - less padding */
+  .primary-section,
+  .secondary-section {
+    padding: 18px 16px;
+    margin-bottom: 24px;
+  }
+
+  /* Search bar */
+  .search-input {
+    max-width: 100%;
+    font-size: 1rem;
+    padding: 12px 16px;
+  }
+
+  /* CSV Upload */
+  .csv-upload-container,
+  .csv-batches-wrapper {
+    max-width: 100%;
+  }
+
+  .csv-batch {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .csv-batch button {
+    width: 100%;
+  }
+
+  /* ==========================================
+     📱 MOBILE TABLE OPTIMIZATION
+  ========================================== */
+
+  /* Make table scrollable horizontally if needed */
+  .transaction-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -14px;
+    padding: 0 14px;
+  }
+
+  /* Table adjustments for mobile */
+  .transaction-table {
+    font-size: 0.9rem;
+    min-width: 100%;
+  }
+
+  /* Header - smaller text */
+  .transaction-table th {
+    padding: 12px 10px;
+    font-size: 0.7rem;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+  }
+
+  /* Table cells - optimized spacing */
+  .transaction-table td {
+    padding: 14px 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  /* Description column - keep bold but smaller */
+  .transaction-table td:nth-child(2) {
+    font-weight: 700;
+    font-size: 1rem;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Date - smaller */
+  .transaction-table td:first-child {
+    font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  /* Amount - still prominent but scaled */
+  .amount {
+    font-weight: 700;
+    font-size: 1.05rem;
+    white-space: nowrap;
+  }
+
+  /* Category badges - more compact */
+  .category-badge {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+
+  /* Action buttons - stack vertically on very small screens */
+  .transaction-table td:last-child {
+    white-space: nowrap;
+  }
+
+  .edit-btn,
+  .save-btn,
+  .cancel-btn,
+  .delete-btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    margin-right: 4px;
+    margin-bottom: 4px;
+  }
+
+  /* Edit inputs - full width in cells */
+  .edit-input {
+    padding: 6px 8px !important;
+    font-size: 0.9rem !important;
+  }
+
+  /* Recurring icon - smaller */
+  .recurring-icon {
+    font-size: 1em;
+  }
+}
+
+/* ==========================================
+   📱 EXTRA SMALL MOBILE (< 480px)
+========================================== */
+
+@media (max-width: 480px) {
+  .transactions-container {
+    padding: 16px 12px;
+  }
+
+  .transactions-container h2 {
+    font-size: 1.5rem;
+  }
+
+  /* Make table more compact */
+  .transaction-table th,
+  .transaction-table td {
+    padding: 10px 6px;
+  }
+
+  .transaction-table td:nth-child(2) {
+    max-width: 100px;
+  }
+
+  /* Stack action buttons vertically on tiny screens */
+  .transaction-table td:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .edit-btn,
+  .save-btn,
+  .cancel-btn,
+  .delete-btn {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  /* Category badges - even more compact */
+  .category-badge {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+
+  .amount {
+    font-size: 1rem;
+  }
+}

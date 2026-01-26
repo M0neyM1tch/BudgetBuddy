@@ -1,0 +1,1121 @@
+/* ============================================
+   DASHBOARD CONTAINER
+   ============================================ */
+.dashboard {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  position: relative;
+}
+
+/* Subtle animated background */
+.dashboard::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.06) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+  animation: background-pulse 8s ease-in-out infinite;
+}
+
+@keyframes background-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.dashboard-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.95), rgba(55, 65, 81, 0.9));
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+}
+
+.dashboard-empty h2 {
+  color: var(--text-primary);
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard-empty p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+/* ============================================
+   FINANCIAL HEALTH SCORE - HERO SECTION
+   ============================================ */
+.dashboard-header {
+  margin-bottom: 3rem;
+}
+
+.health-score-card {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.98), rgba(17, 24, 39, 0.98));
+  backdrop-filter: blur(12px);
+  border-radius: 24px;
+  padding: 3rem;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(75, 85, 99, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.5s ease;
+}
+
+/* Animated glow background */
+.health-score-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+  animation: glow-pulse 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-30px, 30px) scale(1.1);
+    opacity: 0.6;
+  }
+}
+
+/* Score circle with animated ring */
+.health-score-circle {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+.health-score-inner {
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  background: rgba(20, 30, 40, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  z-index: 2;
+}
+
+.health-score-value {
+  font-size: 4rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  line-height: 1;
+  animation: count-up 1s ease-out;
+}
+
+@keyframes count-up {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.health-score-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+}
+
+.health-score-info {
+  flex: 1;
+  z-index: 2;
+}
+
+.health-score-info h2 {
+  color: var(--text-primary);
+  font-size: 2.5rem;
+  margin: 0 0 1rem 0;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ffffff 0%, rgba(16, 185, 129, 0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.status-good {
+  color: var(--primary-green);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.status-warning {
+  color: #f59e0b;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.status-critical {
+  color: #ef4444;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+/* ============================================
+   KEY METRICS GRID - GLASSMORPHISM CARDS
+   ============================================ */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 3rem;
+}
+
+.metric-card {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.95), rgba(55, 65, 81, 0.9));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px solid transparent;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
+}
+
+/* Shimmer effect on hover */
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.6s ease;
+}
+
+.metric-card:hover::before {
+  left: 100%;
+}
+
+.metric-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  border-width: 3px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Dynamic border colors */
+.metric-card:nth-child(1) { border-color: rgba(16, 185, 129, 0.5); }
+.metric-card:nth-child(2) { border-color: rgba(239, 68, 68, 0.5); }
+.metric-card:nth-child(3) { border-color: rgba(251, 191, 36, 0.5); }
+.metric-card:nth-child(4) { border-color: rgba(59, 130, 246, 0.5); }
+.metric-card:nth-child(5) { border-color: rgba(139, 92, 246, 0.5); }
+.metric-card:nth-child(6) { border-color: rgba(236, 72, 153, 0.5); }
+.metric-card:nth-child(7) { border-color: rgba(34, 197, 94, 0.5); }
+.metric-card:nth-child(8) { border-color: rgba(249, 115, 22, 0.5); }
+
+.metric-card:nth-child(1):hover { border-color: rgba(16, 185, 129, 0.9); box-shadow: 0 12px 40px rgba(16, 185, 129, 0.3); }
+.metric-card:nth-child(2):hover { border-color: rgba(239, 68, 68, 0.9); box-shadow: 0 12px 40px rgba(239, 68, 68, 0.3); }
+.metric-card:nth-child(3):hover { border-color: rgba(251, 191, 36, 0.9); box-shadow: 0 12px 40px rgba(251, 191, 36, 0.3); }
+.metric-card:nth-child(4):hover { border-color: rgba(59, 130, 246, 0.9); box-shadow: 0 12px 40px rgba(59, 130, 246, 0.3); }
+
+.metric-icon {
+  font-size: 2.8rem;
+  line-height: 1;
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+  animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  transition: transform 0.3s ease;
+}
+
+.metric-card:hover .metric-icon {
+  transform: scale(1.15) rotate(10deg);
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.metric-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metric-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  transition: all 0.3s ease;
+}
+
+.metric-card:hover .metric-value {
+  transform: scale(1.05);
+}
+
+.metric-value.income {
+  color: var(--primary-green);
+  text-shadow: 0 2px 8px rgba(16, 185, 129, 0.5);
+}
+
+.metric-value.expense {
+  color: #ef4444;
+  text-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+}
+
+.metric-value.savings {
+  color: #fbbf24;
+  text-shadow: 0 2px 8px rgba(251, 191, 36, 0.5);
+}
+
+/* ============================================
+   DASHBOARD SECTIONS
+   ============================================ */
+.dashboard-section {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.95), rgba(55, 65, 81, 0.85));
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.dashboard-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.08), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.dashboard-section:hover::before {
+  opacity: 1;
+}
+
+.dashboard-section:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.dashboard-section h3 {
+  color: var(--text-primary);
+  font-size: 1.6rem;
+  margin: 0 0 1.5rem 0;
+  font-weight: 700;
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+}
+
+.dashboard-section h3::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-green), transparent);
+  border-radius: 2px;
+}
+
+/* ============================================
+   SHORTCOMINGS LIST
+   ============================================ */
+.shortcomings-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.shortcoming-card {
+  background: rgba(55, 65, 81, 0.6);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  border-left: 4px solid;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.shortcoming-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  transition: width 0.3s ease;
+}
+
+.shortcoming-card:hover {
+  transform: translateX(8px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.shortcoming-card:hover::before {
+  width: 100%;
+  opacity: 0.1;
+}
+
+.severity-critical {
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  animation: pulse-critical 2s infinite;
+}
+
+@keyframes pulse-critical {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+.severity-warning {
+  border-left-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.severity-info {
+  border-left-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.shortcoming-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.shortcoming-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.shortcoming-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.shortcoming-action {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+  font-style: italic;
+}
+
+/* ============================================
+   RECOMMENDATIONS LIST
+   ============================================ */
+.recommendations-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.recommendation-card {
+  background: rgba(16, 185, 129, 0.12);
+  border: 2px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.recommendation-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.2), transparent);
+  transition: left 0.6s ease;
+}
+
+.recommendation-card:hover::before {
+  left: 100%;
+}
+
+.recommendation-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+  border-color: rgba(16, 185, 129, 0.6);
+}
+
+.recommendation-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.recommendation-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+  flex: 1;
+}
+
+/* ============================================
+   FORECAST GRID
+   ============================================ */
+.forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.forecast-card {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.9), rgba(31, 41, 55, 0.9));
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(75, 85, 99, 0.4);
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.forecast-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  transition: left 0.5s ease;
+}
+
+.forecast-card:hover::before {
+  left: 100%;
+}
+
+.forecast-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  border-color: var(--primary-green);
+}
+
+.forecast-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.forecast-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease;
+}
+
+.forecast-card:hover .forecast-value {
+  transform: scale(1.1);
+}
+
+.forecast-value.income {
+  color: var(--primary-green);
+  text-shadow: 0 4px 12px rgba(16, 185, 129, 0.6);
+}
+
+.forecast-value.expense {
+  color: #ef4444;
+  text-shadow: 0 4px 12px rgba(239, 68, 68, 0.6);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 1024px) {
+  .health-score-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 2rem;
+    padding: 2rem;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .health-score-circle {
+    width: 160px;
+    height: 160px;
+  }
+  
+  .health-score-inner {
+    width: 140px;
+    height: 140px;
+  }
+  
+  .health-score-value {
+    font-size: 3rem;
+  }
+  
+  .dashboard-section {
+    padding: 1.5rem;
+  }
+  
+  .forecast-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .health-score-card {
+    padding: 1.5rem;
+  }
+  
+  .metric-value {
+    font-size: 1.5rem;
+  }
+  
+  .forecast-value {
+    font-size: 2rem;
+  }
+}
+/* ============================================
+   ENHANCED 12-MONTH FORECAST SECTION
+   ============================================ */
+.dashboard-section .forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.forecast-card {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.95), rgba(31, 41, 55, 0.95));
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(75, 85, 99, 0.4);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* Shimmer effect background */
+.forecast-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  transition: left 0.6s ease;
+}
+
+.forecast-card:hover::before {
+  left: 100%;
+}
+
+/* Hover effects with color-coded borders */
+.forecast-card:hover {
+  transform: translateY(-10px) scale(1.03);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+.forecast-card:nth-child(1) {
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.forecast-card:nth-child(1):hover {
+  border-color: rgba(16, 185, 129, 0.9);
+  box-shadow: 0 16px 48px rgba(16, 185, 129, 0.3);
+}
+
+.forecast-card:nth-child(2) {
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.forecast-card:nth-child(2):hover {
+  border-color: rgba(239, 68, 68, 0.9);
+  box-shadow: 0 16px 48px rgba(239, 68, 68, 0.3);
+}
+
+.forecast-card:nth-child(3) {
+  border-color: rgba(52, 211, 153, 0.5);
+}
+
+.forecast-card:nth-child(3):hover {
+  border-color: rgba(52, 211, 153, 0.9);
+  box-shadow: 0 16px 48px rgba(52, 211, 153, 0.3);
+}
+
+/* Icon at top of card */
+.forecast-card::after {
+  content: '';
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 2rem;
+  opacity: 0.3;
+  transition: all 0.3s ease;
+}
+
+.forecast-card:nth-child(1)::after {
+  content: '💰';
+}
+
+.forecast-card:nth-child(2)::after {
+  content: '💸';
+}
+
+.forecast-card:nth-child(3)::after {
+  content: '📊';
+}
+
+.forecast-card:hover::after {
+  opacity: 0.6;
+  transform: scale(1.2) rotate(10deg);
+}
+
+/* Label styling - more compact and clear */
+.forecast-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-secondary);
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.3;
+  max-width: 100%;
+  word-wrap: break-word;
+  z-index: 2;
+  position: relative;
+}
+
+/* Value styling - huge and bold */
+.forecast-value {
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  transition: all 0.3s ease;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  margin: 0;
+  z-index: 2;
+  position: relative;
+}
+
+.forecast-card:hover .forecast-value {
+  transform: scale(1.08);
+}
+
+.forecast-value.income {
+  color: var(--primary-green);
+  text-shadow: 0 4px 20px rgba(16, 185, 129, 0.6);
+}
+
+.forecast-value.expense {
+  color: #ef4444;
+  text-shadow: 0 4px 20px rgba(239, 68, 68, 0.6);
+}
+
+/* Add subtitle showing monthly breakdown */
+.forecast-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin: 0;
+  opacity: 0.8;
+  z-index: 2;
+  position: relative;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .forecast-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  
+  .forecast-value {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .forecast-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .forecast-card {
+    padding: 2rem 1.5rem;
+    min-height: 160px;
+  }
+  
+  .forecast-value {
+    font-size: 2.2rem;
+  }
+  
+  .forecast-label {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .forecast-value {
+    font-size: 2rem;
+  }
+}
+/* ============================================
+   ENHANCED FINANCIAL HEALTH SCORE CARD
+   ============================================ */
+.health-score-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2.5rem;
+  align-items: center;
+  padding: 0;
+}
+
+.health-score-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.health-score-circle {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.health-score-inner {
+  width: 110px;
+  height: 110px;
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.95), rgba(55, 65, 81, 0.9));
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.health-score-value {
+  font-size: 3rem;
+  font-weight: 900;
+  color: #10b981;
+  text-shadow: 0 4px 12px rgba(16, 185, 129, 0.5);
+  line-height: 1;
+}
+
+.health-score-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.25rem;
+  font-weight: 600;
+}
+
+.health-score-info h2 {
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  margin: 0 0 0.5rem 0;
+  font-weight: 700;
+}
+
+.health-score-info p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.status-good {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.status-critical {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Right Side - Insights */
+.health-score-right {
+  background: rgba(55, 65, 81, 0.4);
+  border: 1px solid rgba(75, 85, 99, 0.4);
+  border-radius: 12px;
+  padding: 1.5rem;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.insight-header {
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.insight-item {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.insight-item.recommendation {
+  align-items: center;
+}
+
+.insight-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.insight-content {
+  flex: 1;
+}
+
+.insight-message {
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+.insight-action {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin: 0;
+  font-style: italic;
+}
+
+.more-insights {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  text-align: center;
+  margin: 1rem 0 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(75, 85, 99, 0.3);
+  font-weight: 500;
+}
+
+/* Responsive Design for Health Card */
+@media (max-width: 1024px) {
+  .health-score-card {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .health-score-left {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .health-score-left {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .health-score-circle {
+    width: 120px;
+    height: 120px;
+  }
+
+  .health-score-inner {
+    width: 95px;
+    height: 95px;
+  }
+
+  .health-score-value {
+    font-size: 2.5rem;
+  }
+}
+/* ============================================
+   COLLAPSIBLE SECTION STYLES
+   ============================================ */
+.section-header-collapsible {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.5rem 0;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.section-header-collapsible:hover {
+  background: rgba(55, 65, 81, 0.3);
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.section-header-collapsible h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.collapse-btn {
+  background: rgba(55, 65, 81, 0.6);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  color: var(--text-primary);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.collapse-btn:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.5);
+  transform: scale(1.1);
+}
+
+.collapse-btn:active {
+  transform: scale(0.95);
+}
+
+/* Smooth animation for content collapse */
+.shortcomings-list,
+.recommendations-list {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

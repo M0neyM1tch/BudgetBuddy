@@ -1,0 +1,54 @@
+{
+  "savingsAccounts": [
+    {
+      "id": "offer-001",
+      "provider": "EQ Bank",
+      "productName": "High Interest Savings Account",
+      "rate": "4.50%",
+      "bonus": "$50 welcome bonus",
+      "description": "No fees, CDIC insured, easy mobile app",
+      "fintelLink": "https://tracking.fintelconnect.com/aff_c?offer_id=123&aff_id=YOUR_ID&url_id=456",
+      "customId": "budgetbuddy-savemore-slot1",
+      "featured": true,
+      "lastUpdated": "2025-12-15"
+    },
+    {
+      "id": "offer-002",
+      "provider": "Tangerine",
+      "productName": "Savings Account",
+      "rate": "4.25%",
+      "bonus": "5.00% promo for 5 months",
+      "description": "No minimum balance, seamless banking",
+      "fintelLink": "https://tracking.fintelconnect.com/aff_c?offer_id=124&aff_id=YOUR_ID&url_id=457",
+      "customId": "budgetbuddy-savemore-slot2",
+      "featured": false,
+      "lastUpdated": "2025-12-18"
+    },
+    {
+      "id": "offer-003",
+      "provider": "Wealthsimple",
+      "productName": "Cash Account",
+      "rate": "4.00%",
+      "bonus": null,
+      "description": "Invest your savings with daily interest",
+      "fintelLink": "https://tracking.fintelconnect.com/aff_c?offer_id=125&aff_id=YOUR_ID&url_id=458",
+      "customId": "budgetbuddy-savemore-slot3",
+      "featured": false,
+      "lastUpdated": "2025-12-10"
+    }
+  ],
+  "creditCards": [
+    {
+      "id": "offer-101",
+      "provider": "Scotiabank",
+      "productName": "Momentum VISA Infinite",
+      "cashback": "4% on groceries & recurring bills",
+      "bonus": "$120 annual fee rebate first year",
+      "description": "Premium rewards, travel insurance included",
+      "fintelLink": "https://tracking.fintelconnect.com/aff_c?offer_id=200&aff_id=YOUR_ID&url_id=500",
+      "customId": "budgetbuddy-creditcard-slot1",
+      "featured": true,
+      "lastUpdated": "2025-12-01"
+    }
+  ]
+}

@@ -1,0 +1,223 @@
+// Date and data transformation helpers
+
+export function toDailySeries(dates, seriesByDate) {
+  return dates.map((d) => seriesByDate[d] || 0);
+}
+
+export function cumulative(arr) {
+  let run = 0;
+  return arr.map((v) => {
+    run += v;
+    return run;
+  });
+}
+
+export function getMonthsList(transactions) {
+  const months = transactions.map((tx) => tx.date.slice(0, 7)).filter(Boolean);
+  return Array.from(new Set(months)).sort().reverse();
+}
+
+// Calculator helper
+export function calcBudget(monthlyIncome, savingsPercent) {
+  const savings = monthlyIncome * (savingsPercent / 100);
+  const spendable = monthlyIncome - savings;
+  return { savings, spendable };
+}
+
+// Transaction calculations
+export function calculateSummaries(transactions) {
+  const summaryIncome = transactions
+    .filter((tx) => tx.category === 'Income')
+    .reduce((acc, tx) => acc + Number(tx.amount), 0);
+
+  const summaryExpenses = transactions
+    .filter((tx) => tx.category === 'Expenses')
+    .reduce((acc, tx) => acc + Math.abs(Number(tx.amount)), 0);
+
+  // Calculate savings from "Savings" category
+  const savingsFromCategory = transactions
+    .filter((tx) => tx.category === 'Savings')
+    .reduce((acc, tx) => acc + Number(tx.amount), 0);
+
+  // Calculate goal contributions (transactions with category starting with "Goal: ")
+  const goalContributions = transactions
+    .filter((tx) => tx.category && tx.category.startsWith('Goal: '))
+    .reduce((acc, tx) => acc + Math.abs(Number(tx.amount)), 0);
+
+  // Total savings = Savings category + Goal contributions
+  const summarySavings = savingsFromCategory + goalContributions;
+
+  return { summaryIncome, summaryExpenses, summarySavings };
+}
+
+// Format date for display
+export function formatDate(dateString) {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+// Format currency
+export function formatCurrency(amount) {
+  return new Intl.NumberFormat('en-CA', {
+    style: 'currency',
+    currency: 'CAD',
+  }).format(amount);
+}
+
+// Calculate annual projections from recurring transactions
+export const calculateAnnualProjections = (transactions) => {
+  // Filter only recurring transactions - check BOTH camelCase and snake_case
+  const recurringTxs = transactions.filter(tx => tx.isRecurring === true || tx.is_recurring === true);
+  
+  let annualIncome = 0;
+  let annualExpenses = 0;
+  
+  recurringTxs.forEach(tx => {
+    const amount = Math.abs(Number(tx.amount));
+    const isIncome = tx.category === 'Income';
+    
+    // Normalize frequency to handle missing values
+    const frequency = tx.frequency || 'monthly';
+    
+    // Determine annual multiplier based on actual frequency
+    let annualMultiplier = 12; // Default to monthly
+    switch (frequency.toLowerCase()) {
+      case 'biweekly':
+        annualMultiplier = 26;
+        break;
+      case 'monthly':
+        annualMultiplier = 12;
+        break;
+      default:
+        annualMultiplier = 12; // Fallback to monthly
+    }
+    
+    const annualAmount = amount * annualMultiplier;
+    
+    console.log(`📊 ${tx.description}: ${frequency} × $${amount.toFixed(2)} = $${annualAmount.toFixed(2)} annually (${isIncome ? 'income' : 'expense'})`);
+    
+    if (isIncome) {
+      annualIncome += annualAmount;
+    } else {
+      annualExpenses += annualAmount;
+    }
+  });
+  
+  console.log(`💰 Total Annual Income: $${annualIncome.toFixed(2)}, Total Annual Expenses: $${annualExpenses.toFixed(2)}`);
+  
+  // Calculate monthly average based on actual frequency distribution
+  const monthlyIncome = annualIncome / 12;
+  const monthlyExpenses = annualExpenses / 12;
+  
+  return {
+    annualIncome,
+    annualExpenses,
+    netAnnual: annualIncome - annualExpenses,
+    monthlyIncome,
+    monthlyExpenses,
+  };
+};
+
+// Generate comprehensive dashboard insights
+export function generateDashboardInsights(transactions, goals) {
+  const { summaryIncome, summaryExpenses, summarySavings } = calculateSummaries(transactions);
+  const projections = calculateAnnualProjections(transactions);
+  
+  // Calculate metrics
+  const netCashFlow = summaryIncome - summaryExpenses;
+  const savingsRate = summaryIncome > 0 ? (summarySavings / summaryIncome) * 100 : 0;
+  const monthlyRunway = summaryExpenses > 0 ? summarySavings / summaryExpenses : 0;
+  
+  // Calculate goal progress
+  const activeGoals = goals.filter(g => (g.current_amount || 0) < g.target_amount);
+  const avgGoalProgress = activeGoals.length > 0
+    ? activeGoals.reduce((sum, g) => sum + ((g.current_amount || 0) / g.target_amount * 100), 0) / activeGoals.length
+    : 100;
+  
+  // Health score (0-100)
+  const healthScore = Math.round((
+    Math.min(savingsRate * 5, 100) + // 20% savings = 100 points
+    (netCashFlow > 0 ? 100 : 0) +
+    avgGoalProgress +
+    Math.min(monthlyRunway * 16.67, 100) // 6 months = 100 points
+  ) / 4);
+  
+  // Identify shortcomings
+  const shortcomings = [];
+  
+  if (netCashFlow < 0) {
+    shortcomings.push({
+      severity: 'critical',
+      icon: '🚨',
+      message: `Spending ${formatCurrency(Math.abs(netCashFlow))} more than you earn`,
+      action: 'Reduce expenses or increase income'
+    });
+  }
+  
+  if (savingsRate < 10 && summaryIncome > 0) {
+    shortcomings.push({
+      severity: 'warning',
+      icon: '⚠️',
+      message: `Low savings rate: ${savingsRate.toFixed(1)}% (target: 20%+)`,
+      action: `Save ${formatCurrency((summaryIncome * 0.20) - summarySavings)} more per month`
+    });
+  }
+  
+  if (monthlyRunway < 3 && monthlyRunway > 0) {
+    shortcomings.push({
+      severity: 'warning',
+      icon: '💰',
+      message: `Only ${monthlyRunway.toFixed(1)} months emergency fund`,
+      action: `Build to ${formatCurrency(summaryExpenses * 3)}`
+    });
+  }
+  
+  // Generate recommendations
+  const recommendations = [];
+  
+  if (netCashFlow > 0) {
+    const lowestGoal = activeGoals.sort((a, b) => 
+      ((a.current_amount || 0) / a.target_amount) - ((b.current_amount || 0) / b.target_amount)
+    )[0];
+    
+    if (lowestGoal) {
+      recommendations.push({
+        icon: '💡',
+        message: `Allocate ${formatCurrency(netCashFlow)} surplus to "${lowestGoal.name}"`
+      });
+    }
+  }
+  
+  if (projections.netAnnual > 0) {
+    recommendations.push({
+      icon: '📈',
+      message: `Annual surplus projected: ${formatCurrency(projections.netAnnual)}`
+    });
+  }
+  
+  if (savingsRate >= 20 && monthlyRunway >= 6) {
+    recommendations.push({
+      icon: '✅',
+      message: 'Excellent financial health! Consider investing excess savings'
+    });
+  }
+  
+  return {
+    healthScore,
+    keyMetrics: {
+      monthlyIncome: summaryIncome,
+      monthlyExpenses: summaryExpenses,
+      monthlySavings: summarySavings,
+      netCashFlow,
+      savingsRate: savingsRate.toFixed(1),
+      monthlyRunway: monthlyRunway.toFixed(1),
+      activeGoalsCount: activeGoals.length
+    },
+    shortcomings,
+    recommendations,
+    projections
+  };
+}

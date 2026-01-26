@@ -1,0 +1,108 @@
+.feature-locked-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+}
+
+.overlay-content {
+  position: relative;
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.lock-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.overlay-content h2 {
+  color: #1a1a1a;
+  margin-bottom: 12px;
+  font-size: 28px;
+}
+
+.overlay-content p {
+  color: #666;
+  margin-bottom: 24px;
+  font-size: 16px;
+}
+
+.feature-screenshot {
+  margin: 24px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.feature-screenshot img {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: blur(4px);
+  opacity: 0.6;
+}
+
+.unlock-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.unlock-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(102, 126, 234, 0.4);
+}
+
+.benefits-list {
+  text-align: left;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.benefits-list p {
+  margin: 8px 0;
+  color: #2d3748;
+  font-size: 14px;
+}

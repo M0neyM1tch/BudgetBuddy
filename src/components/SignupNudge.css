@@ -1,0 +1,91 @@
+.signup-nudge {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  padding: 24px;
+  max-width: 360px;
+  z-index: 9998;
+  animation: slideInRight 0.4s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.nudge-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #999;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.nudge-close:hover {
+  color: #333;
+}
+
+.nudge-content {
+  text-align: center;
+}
+
+.nudge-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.signup-nudge h3 {
+  color: #1a1a1a;
+  margin-bottom: 8px;
+  font-size: 20px;
+}
+
+.signup-nudge p {
+  color: #666;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.nudge-cta {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom: 8px;
+  transition: transform 0.2s;
+}
+
+.nudge-cta:hover {
+  transform: translateY(-2px);
+}
+
+.nudge-dismiss {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.nudge-dismiss:hover {
+  color: #666;
+}

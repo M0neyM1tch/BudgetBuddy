@@ -1,0 +1,444 @@
+.insurance-calculator-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.insurance-header {
+  background: rgba(55, 65, 81, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.insurance-header h2 {
+  color: var(--text-primary, #f9fafb);
+  font-size: 2.25rem;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.insurance-header h2::first-letter {
+  font-size: 1.3em;
+  vertical-align: middle;
+}
+
+
+
+.insurance-form {
+  background: rgba(55, 65, 81, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  margin-bottom: 30px;
+}
+
+/* Province selector - match insurance type containers */
+.form-section {
+  background: rgba(55, 65, 81, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  border-radius: 12px;
+  padding: 20px 25px;
+  margin-bottom: 20px;
+}
+
+.form-section label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-primary, #f9fafb);
+  font-size: 1rem;
+}
+
+.form-section select {
+  width: 100%;
+  padding: 14px;
+  background: rgba(31, 41, 55, 0.8);
+  border: 1px solid var(--border, #4b5563);
+  border-radius: 8px;
+  font-size: 16px;
+  color: var(--text-primary, #f9fafb);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-section select:focus {
+  outline: none;
+  border-color: var(--primary, #10b981);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+
+.insurance-types {
+  margin: 20px 0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: rgba(75, 85, 99, 0.3);
+  border-radius: 8px;
+  margin-bottom: 15px;
+  cursor: pointer;
+  transition: background 0.3s;
+  border: 1px solid rgba(75, 85, 99, 0.5);
+}
+
+.checkbox-label:hover {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: var(--primary-green, #10b981);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  cursor: pointer;
+  accent-color: var(--primary-green, #10b981);
+}
+
+.checkbox-label span {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary, #f9fafb);
+}
+
+.nested-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 10px 0 20px 32px;
+}
+
+/* Calculate button - HIGH VISIBILITY version */
+.calculate-btn {
+  width: 100%;
+  padding: 22px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%); /* Bright green gradient */
+  color: #ffffff; /* Pure white text */
+  border: 3px solid #ecf0ef; /* Bright light green border */
+  border-radius: 14px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 8px 24px rgba(0, 15, 10, 0.8), /* Strong green glow */
+    0 4px 12px rgba(0, 0, 0, 0.5); /* Dark shadow for depth */
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-top: 15px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shine effect on button */
+.calculate-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.calculate-btn:hover::before {
+  left: 100%;
+}
+
+.calculate-btn:hover {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%); /* Lighter gradient on hover */
+  border-color: #6ee7b7;
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 
+    0 12px 32px rgba(52, 211, 153, 1), /* Massive green glow */
+    0 6px 16px rgba(0, 0, 0, 0.6);
+}
+
+.calculate-btn:active {
+  background: linear-gradient(135deg, #6ee7b7 0%, #34d399 100%); /* Even lighter when clicking */
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 
+    0 6px 20px rgba(110, 231, 183, 0.9),
+    0 3px 10px rgba(0, 0, 0, 0.5);
+}
+
+
+
+
+.results-section {
+  background: rgba(55, 65, 81, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  margin-bottom: 30px;
+}
+
+.results-section h3 {
+  text-align: center;
+  color: var(--primary-green, #10b981);
+  margin-bottom: 25px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.result-card {
+  background: rgba(75, 85, 99, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  transition: transform 0.3s ease;
+}
+
+.result-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+}
+
+.result-card.primary {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
+  border: 2px solid var(--primary-green, #10b981);
+  grid-column: 1 / -1;
+}
+
+.result-value {
+  font-size: 36px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: var(--text-primary, #f9fafb);
+}
+
+.result-label {
+  font-size: 14px;
+  color: var(--text-secondary, #d1d5db);
+}
+
+.result-annual {
+  font-size: 18px;
+  margin-top: 8px;
+  color: var(--primary-green, #10b981);
+  font-weight: 600;
+}
+
+.comparison-bar {
+  margin: 30px 0;
+}
+
+.bar-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #f9fafb);
+}
+
+.bar-visual {
+  height: 40px;
+  background: rgba(31, 41, 55, 0.8);
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+}
+
+.bar-fill {
+  height: 100%;
+  display: inline-block;
+  transition: width 0.5s ease;
+}
+
+.bar-fill.current {
+  background: #ef4444;
+  opacity: 0.7;
+}
+
+.bar-fill.average {
+  background: linear-gradient(90deg, var(--primary-green, #10b981), var(--light-green, #34d399));
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.cta-section {
+  background: rgba(16, 185, 129, 0.15);
+  border: 2px solid rgba(16, 185, 129, 0.4);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  margin-top: 30px;
+}
+
+.cta-section p {
+  margin-bottom: 15px;
+  font-size: 16px;
+  color: var(--text-primary, #f9fafb);
+}
+
+.quote-btn {
+  display: inline-block;
+  padding: 14px 32px;
+  background: linear-gradient(135deg, var(--primary-green, #10b981), var(--dark-green, #059669));
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.3s;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.quote-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+}
+
+.tips-section {
+  background: rgba(55, 65, 81, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.tips-toggle {
+  width: 100%;
+  padding: 15px;
+  background: rgba(75, 85, 99, 0.5);
+  border: 1px solid var(--border, #4b5563);
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary, #f9fafb);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.3s, border-color 0.3s;
+}
+
+.tips-toggle:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: var(--primary-green, #10b981);
+}
+
+.tips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.tip-card {
+  display: flex;
+  gap: 15px;
+  padding: 20px;
+  background: rgba(75, 85, 99, 0.3);
+  border-radius: 10px;
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.tip-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  border-color: var(--primary-green, #10b981);
+}
+
+.tip-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.tip-content h4 {
+  color: var(--text-primary, #f9fafb);
+  margin-bottom: 5px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.tip-savings {
+  color: var(--primary-green, #10b981);
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.tip-content p {
+  color: var(--text-secondary, #d1d5db);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .nested-inputs {
+    grid-template-columns: 1fr;
+  }
+  
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .tips-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.highlight-green {
+  background: linear-gradient(135deg, #10b981, #34d399);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+
+
+/* ============================================
+   FORCE REMOVE WHITE BOX - FINAL OVERRIDE
+   ============================================ */
+
+.insurance-calculator-container .insurance-form,
+div[class*="insurance"] .insurance-form,
+.container .insurance-form {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 30px 40px !important;
+  margin-bottom: 30px !important;
+}
+
+/* Remove backgrounds from any nested containers */
+.insurance-form > div,
+.insurance-form .form-section,
+.insurance-form > * {
+  background: transparent !important;
+}
+
+/* Keep only the select dropdown styled */
+.insurance-form select {
+  background: rgba(31, 41, 55, 0.8) !important;
+  border: 1px solid var(--border, #4b5563) !important;
+}
+
+/* Center all headings in insurance calculator */
+.insurance-calculator-container h2,
+.insurance-calculator-container h3 {
+  text-align: center;
+}

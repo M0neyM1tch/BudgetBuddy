@@ -1,0 +1,124 @@
+/* Cookie Consent Banner */
+.cookie-consent-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.cookie-consent-banner {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  border-top: 3px solid #10b981;
+  padding: 25px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.cookie-icon {
+  font-size: 3rem;
+  flex-shrink: 0;
+}
+
+.cookie-content {
+  flex: 1;
+  color: #d1d5db;
+}
+
+.cookie-content h3 {
+  color: #10b981;
+  margin: 0 0 10px 0;
+  font-size: 1.3rem;
+}
+
+.cookie-content p {
+  margin: 5px 0;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.cookie-details {
+  font-size: 0.85rem !important;
+  color: #9ca3af;
+  margin-top: 10px !important;
+}
+
+.cookie-details a {
+  color: #10b981;
+  text-decoration: none;
+}
+
+.cookie-details a:hover {
+  text-decoration: underline;
+}
+
+.cookie-actions {
+  display: flex;
+  gap: 15px;
+  flex-shrink: 0;
+}
+
+.btn-accept,
+.btn-decline {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  white-space: nowrap;
+}
+
+.btn-accept {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.btn-accept:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+}
+
+.btn-decline {
+  background: rgba(55, 65, 81, 0.8);
+  color: #d1d5db;
+  border: 1px solid rgba(156, 163, 175, 0.3);
+}
+
+.btn-decline:hover {
+  background: rgba(75, 85, 99, 0.8);
+  border-color: rgba(156, 163, 175, 0.5);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .cookie-consent-banner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .cookie-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .btn-accept,
+  .btn-decline {
+    width: 100%;
+  }
+}

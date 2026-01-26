@@ -1,0 +1,33 @@
+.public-feature-wrapper {
+  position: relative;
+  min-height: 100vh;
+}
+
+.demo-banner {
+  position: sticky;
+  top: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.demo-banner span {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.demo-usage-count {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.feature-content {
+  padding: 24px;
+}
