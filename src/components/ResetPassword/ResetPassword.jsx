@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import '../Auth/Auth.css';
 
@@ -7,31 +7,38 @@ function ResetPassword() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [verifying, setVerifying] = useState(true);
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [error, setError] = useState('');
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check for recovery token in URL hash
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = hashParams.get('access_token');
-    const type = hashParams.get('type');
+    const verifyToken = async () => {
+      const tokenHash = searchParams.get('token_hash');
+      const type = searchParams.get('type');
 
-    if (type === 'recovery' && accessToken) {
-      setIsRecoveryMode(true);
-    }
+      if (type === 'recovery' && tokenHash) {
+        // Verify the OTP token
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: 'recovery'
+        });
 
-    // Also listen for auth state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setIsRecoveryMode(true);
+        if (error) {
+          console.error('Token verification error:', error);
+          setIsRecoveryMode(false);
+        } else {
+          setIsRecoveryMode(true);
+        }
+      } else {
+        setIsRecoveryMode(false);
       }
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
+      setVerifying(false);
     };
-  }, []);
+
+    verifyToken();
+  }, [searchParams]);
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
@@ -61,6 +68,20 @@ function ResetPassword() {
       navigate('/');
     }
   };
+
+  if (verifying) {
+    return (
+      <div className="auth-container">
+        <div className="auth-card">
+          <div className="auth-header">
+            <img src="/BBLogo.jpg" alt="BudgetBuddy" className="auth-logo" />
+            <h2>Verifying...</h2>
+          </div>
+          <p style={{ color: '#6b7280' }}>Please wait while we verify your reset link.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isRecoveryMode) {
     return (
