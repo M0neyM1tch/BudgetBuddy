@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import './Auth.css';
 
@@ -10,6 +11,7 @@ export default function Auth() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { login, register } = useAuth();
 
   // Password strength checker
@@ -79,6 +81,32 @@ export default function Auth() {
     }
   };
 
+const handleForgotPassword = async (e) => {
+  e.preventDefault();
+  setError('');
+  setSuccessMessage('');
+  setLoading(true);
+
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://budg.ca/reset-password'
+    });
+
+    if (error) throw error;
+
+    setSuccessMessage('Password reset email sent! Check your inbox.');
+    setTimeout(() => {
+      setShowForgotPassword(false);
+      setSuccessMessage('');
+    }, 3000);
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
   const passwordStrength = getPasswordStrengthLabel();
 
   return (
@@ -141,6 +169,50 @@ export default function Auth() {
             </p>
           )}
 
+
+          {/* ADD THE FORGOT PASSWORD SECTION HERE */}
+          {isLogin && (
+            <button
+              type="button"
+              onClick={() => setShowForgotPassword(!showForgotPassword)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#10b981',
+                cursor: 'pointer',
+                fontSize: '14px',
+                textDecoration: 'underline',
+                marginTop: '-10px',
+                marginBottom: '10px'
+              }}
+            >
+              Forgot Password?
+            </button>
+          )}
+
+          {showForgotPassword && isLogin && (
+            <div style={{ marginBottom: '15px' }}>
+              <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '10px' }}>
+                Enter your email to receive a password reset link
+              </p>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={loading || !email}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  backgroundColor: '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer'
+                }}
+              >
+                {loading ? 'Sending...' : 'Send Reset Link'}
+              </button>
+            </div>
+          )}
           
             {/* Terms & Privacy Consent - Only show on signup */}
             {!isLogin && (

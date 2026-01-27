@@ -6,6 +6,7 @@ import AdminAnalytics from './admin/AdminAnalytics';
 import PrivacyPolicy from './components/Legal/PrivacyPolicy';
 import TermsOfService from './components/Legal/TermsofService';
 import CookieConsent from './components/Legal/CookieConsent';
+import ResetPassword from './components/ResetPassword/ResetPassword';
 
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
       <Routes>
         <Route path="/" element={<BudgetBuddy />} />  {/* ⬅️ ONLY THIS LINE CHANGED */}
         <Route path="/login" element={!user ? <Auth /> : <Navigate to="/" />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/admin" element={user ? <AdminAnalytics /> : <Navigate to="/login" />} />
         
         {/* Legal Pages - Accessible to everyone */}
