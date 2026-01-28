@@ -266,6 +266,94 @@ function FreedomCalculator() {
         </div>
       </div>
 
+
+
+      {/* EXPENSE SLIDERS */}
+      <div className="projection-chart">
+        <h2>💰 Adjust Your Expenses to See Impact</h2>
+        <div className="expense-impact-grid">
+          <div className="input-card">
+            <EngagingSlider
+              label="Housing"
+              value={expenses.housing}
+              min={0}
+              max={4000}
+              step={50}
+              largeStep={100}
+              onChange={(val) => setExpenses(prev => ({ ...prev, housing: val }))}
+              icon="🏠"
+              prefix="$"
+              unit="/mo"
+              color="#8b5cf6"
+              showMarkers={true}
+              showInput={true}
+            />
+            <p className="expense-note">Rent, mortgage, utilities</p>
+          </div>
+
+          <div className="input-card">
+            <EngagingSlider
+              label="Lifestyle"
+              value={expenses.lifestyle}
+              min={0}
+              max={3000}
+              step={50}
+              largeStep={100}
+              onChange={(val) => setExpenses(prev => ({ ...prev, lifestyle: val }))}
+              icon="🍔"
+              prefix="$"
+              unit="/mo"
+              color="#ec4899"
+              showMarkers={true}
+              showInput={true}
+            />
+            <p className="expense-note">Food, entertainment, subscriptions</p>
+          </div>
+
+          <div className="input-card">
+            <EngagingSlider
+              label="Transport"
+              value={expenses.transport}
+              min={0}
+              max={2000}
+              step={50}
+              largeStep={100}
+              onChange={(val) => setExpenses(prev => ({ ...prev, transport: val }))}
+              icon="🚗"
+              prefix="$"
+              unit="/mo"
+              color="#06b6d4"
+              showMarkers={true}
+              showInput={true}
+            />
+            <p className="expense-note">Car payment, gas, insurance</p>
+          </div>
+        </div>
+
+        {/* Real-time Impact Display */}
+        <div className="impact-summary">
+          <div className="impact-item">
+            <span className="impact-label">Monthly Expenses:</span>
+            <span className="impact-value negative">${results.totalExpenses?.toLocaleString()}</span>
+          </div>
+          <div className="impact-item">
+            <span className="impact-label">Monthly Savings:</span>
+            <span className="impact-value positive">${results.monthlySavings?.toLocaleString()}</span>
+          </div>
+          <div className="impact-item">
+            <span className="impact-label">Savings Rate:</span>
+            <span className="impact-value">{results.scareFactors.monthlyExpenseRatio}% spent</span>
+          </div>
+        </div>
+      </div>
+
+
+
+
+
+
+
+
       {/* ENHANCED FREEDOM SCORE CARD - SPACE OPTIMIZED */}
       <div 
         className="freedom-score-card-optimized" 
@@ -506,84 +594,12 @@ function FreedomCalculator() {
         </div>
       </div>
 
-      {/* EXPENSE SLIDERS */}
-      <div className="projection-chart">
-        <h2>💰 Adjust Your Expenses to See Impact</h2>
-        <div className="expense-impact-grid">
-          <div className="input-card">
-            <EngagingSlider
-              label="Housing"
-              value={expenses.housing}
-              min={0}
-              max={4000}
-              step={50}
-              largeStep={100}
-              onChange={(val) => setExpenses(prev => ({ ...prev, housing: val }))}
-              icon="🏠"
-              prefix="$"
-              unit="/mo"
-              color="#8b5cf6"
-              showMarkers={true}
-              showInput={true}
-            />
-            <p className="expense-note">Rent, mortgage, utilities</p>
-          </div>
 
-          <div className="input-card">
-            <EngagingSlider
-              label="Lifestyle"
-              value={expenses.lifestyle}
-              min={0}
-              max={3000}
-              step={50}
-              largeStep={100}
-              onChange={(val) => setExpenses(prev => ({ ...prev, lifestyle: val }))}
-              icon="🍔"
-              prefix="$"
-              unit="/mo"
-              color="#ec4899"
-              showMarkers={true}
-              showInput={true}
-            />
-            <p className="expense-note">Food, entertainment, subscriptions</p>
-          </div>
 
-          <div className="input-card">
-            <EngagingSlider
-              label="Transport"
-              value={expenses.transport}
-              min={0}
-              max={2000}
-              step={50}
-              largeStep={100}
-              onChange={(val) => setExpenses(prev => ({ ...prev, transport: val }))}
-              icon="🚗"
-              prefix="$"
-              unit="/mo"
-              color="#06b6d4"
-              showMarkers={true}
-              showInput={true}
-            />
-            <p className="expense-note">Car payment, gas, insurance</p>
-          </div>
-        </div>
 
-        {/* Real-time Impact Display */}
-        <div className="impact-summary">
-          <div className="impact-item">
-            <span className="impact-label">Monthly Expenses:</span>
-            <span className="impact-value negative">${results.totalExpenses?.toLocaleString()}</span>
-          </div>
-          <div className="impact-item">
-            <span className="impact-label">Monthly Savings:</span>
-            <span className="impact-value positive">${results.monthlySavings?.toLocaleString()}</span>
-          </div>
-          <div className="impact-item">
-            <span className="impact-label">Savings Rate:</span>
-            <span className="impact-value">{results.scareFactors.monthlyExpenseRatio}% spent</span>
-          </div>
-        </div>
-      </div>
+
+
+
 
       {/* FREEDOM PROGRESS PATH */}
       <div className="insights-box">
