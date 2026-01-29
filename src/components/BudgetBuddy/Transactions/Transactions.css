@@ -995,3 +995,57 @@
     font-size: 1rem;
   }
 }
+
+
+.active-recurring-list {
+  margin-top: 20px;
+}
+
+.recurring-item {
+  background: #374151;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.recurring-description,
+.recurring-amount,
+.recurring-category {
+  flex-shrink: 0;
+}
+
+.recurring-frequency,
+.recurring-next-date {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.recurring-next-date {
+  color: #10b981;
+}
+
+.recurring-delete-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.recurring-delete-btn:hover {
+  background: #dc2626;
+}
+
+.empty-state {
+  margin-top: 20px;
+  padding: 20px;
+  text-align: center;
+  color: #9ca3af;
+  font-style: italic;
+}
