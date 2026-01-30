@@ -54,11 +54,16 @@ export const validateTransaction = (data) => {
     if (isNaN(dateObj.getTime())) {
       errors.date = 'Invalid date format';
     } else {
+      // ✅ ALLOW FUTURE DATES for recurring transactions
+      // Only block dates that are VERY far in the future (1 year+)
       const today = new Date();
-      today.setHours(23, 59, 59, 999); // End of today
-      if (dateObj > today) {
-        errors.date = 'Date cannot be in the future';
+      const oneYearFromNow = new Date(today);
+      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+      
+      if (dateObj > oneYearFromNow) {
+        errors.date = 'Date cannot be more than 1 year in the future';
       }
+      
       // Check if date is too old (e.g., before 1900)
       const minDate = new Date('1900-01-01');
       if (dateObj < minDate) {

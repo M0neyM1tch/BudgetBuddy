@@ -110,6 +110,40 @@ function BudgetBuddy() {
     }
   };
 
+  // ========================================
+  // 🔥 PROCESS DUE RECURRING TRANSACTIONS
+  // ========================================
+  useEffect(() => {
+    const processDueTransactions = async () => {
+      if (!user) return;
+
+      try {
+        console.log('🔄 Checking for due recurring transactions...');
+        const createdTransactions = await processDueRecurringTransactions(user.id);
+
+        // If any transactions were created, reload the full transaction list
+        if (createdTransactions && createdTransactions.length > 0) {
+          console.log(`✅ Created ${createdTransactions.length} due recurring transaction(s)`);
+          
+          // Reload transactions to show the new ones
+          const allTransactions = await fetchTransactions(user.id);
+          setTransactions(allTransactions);
+        } else {
+          console.log('✓ No due recurring transactions found');
+        }
+      } catch (error) {
+        console.error('⚠️ Failed to process recurring transactions:', error);
+        // Silent failure - don't annoy users with alerts
+      }
+    };
+
+    // Run on mount and whenever user changes
+    processDueTransactions();
+  }, [user?.id]);
+
+
+
+
   // Recalculate goal progress from transactions whenever transactions or goals change
   useEffect(() => {
     if (goals.length === 0 || transactions.length === 0) return;

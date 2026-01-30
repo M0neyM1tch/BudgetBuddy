@@ -229,12 +229,24 @@ export const deleteRecurringRule = async (ruleId) => {
   }
 };
 
-// Process due recurring transactions (with idempotency check)
+
+
+
+/**
+ * Process recurring transactions that are due
+ * 
+ * KEY FIXES:
+ * 1. Transaction date = rule.next_run_date (not today)
+ * 2. Idempotency check uses rule.next_run_date (not today)  
+ * 3. Next run calculated from rule.next_run_date (not today)
+ * 
+ * This preserves the exact 14-day cadence regardless of when the processor runs
+ */
 export const processDueRecurringTransactions = async (userId) => {
   try {
     const today = new Date().toISOString().split('T')[0];
 
-    // Fetch all active recurring rules that are due
+    // Fetch all active recurring rules that are due (next_run_date <= today)
     const { data: dueRules, error: fetchError } = await supabase
       .from('recurring_rules')
       .select('*')
@@ -248,23 +260,22 @@ export const processDueRecurringTransactions = async (userId) => {
     const createdTransactions = [];
 
     for (const rule of dueRules) {
-      // ✅ IDEMPOTENCY CHECK: Prevent duplicate transactions for the same rule + date
+      // ✅ FIX 1: Check for duplicate using the SCHEDULED date (rule.next_run_date)
       const { data: existingTransaction } = await supabase
         .from('transactions')
         .select('id')
         .eq('recurring_rule_id', rule.id)
-        .eq('date', today)
+        .eq('date', rule.next_run_date)  // ✅ CHANGED: Use scheduled date, not today
         .maybeSingle();
 
-      // Skip if transaction already exists for this rule today
       if (existingTransaction) {
-        console.log(`Transaction already exists for rule ${rule.id} on ${today}, skipping.`);
+        console.log(`✓ Transaction already exists for rule ${rule.id} on ${rule.next_run_date}, skipping.`);
         continue;
       }
 
-      // Create transaction
+      // ✅ FIX 2: Create transaction for the SCHEDULED date (rule.next_run_date)
       const transaction = await addTransaction(userId, {
-        date: today,
+        date: rule.next_run_date,  // ✅ CHANGED: Use scheduled date, not today
         description: rule.description,
         amount: rule.amount,
         category: rule.category,
@@ -273,32 +284,43 @@ export const processDueRecurringTransactions = async (userId) => {
       });
 
       createdTransactions.push(transaction);
+      console.log(`✓ Created transaction for rule "${rule.description}" on ${rule.next_run_date}`);
 
-      // Calculate next run date
-      const nextDate = calculateNextRunDate(rule.frequency, rule.recur_day, today);
+      // ✅ FIX 3: Calculate next run from the SCHEDULED date (rule.next_run_date)
+      const nextDate = calculateNextRunDate(rule.frequency, rule.recur_day, rule.next_run_date);  // ✅ CHANGED
 
       // Update recurring rule
       await updateRecurringRule(rule.id, {
         next_run_date: nextDate
       });
+
+      console.log(`✓ Updated rule "${rule.description}" - next run: ${nextDate}`);
     }
 
     return createdTransactions;
   } catch (error) {
+    console.error('Error processing due recurring transactions:', error);
     const userMessage = handleSupabaseError(error);
     throw new Error(userMessage);
   }
 };
 
-// Calculate next run date for recurring transactions
+
+
+
+
 const calculateNextRunDate = (frequency, recurDay, currentDate) => {
   const current = new Date(currentDate);
   
   if (frequency === 'monthly') {
-    // Next month, same day
     const next = new Date(current);
     next.setMonth(next.getMonth() + 1);
-    next.setDate(parseInt(recurDay));
+    
+    // Clamp to last day of month to prevent overflow
+    const lastDayOfMonth = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
+    const clampedDay = Math.min(parseInt(recurDay), lastDayOfMonth);
+    next.setDate(clampedDay);
+    
     return next.toISOString().split('T')[0];
   } else if (frequency === 'biweekly') {
     // 14 days from now
@@ -309,6 +331,7 @@ const calculateNextRunDate = (frequency, recurDay, currentDate) => {
   
   return currentDate;
 };
+
 
 // ============================================
 // CATEGORIES
