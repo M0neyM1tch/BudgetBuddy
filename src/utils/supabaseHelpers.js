@@ -232,7 +232,6 @@ export const deleteRecurringRule = async (ruleId) => {
 
 
 
-
 /**
  * Process recurring transactions that are due
  * 
