@@ -186,7 +186,11 @@ export const addRecurringRule = async (userId, rule) => {
       .insert([{
         user_id: userId,
         ...sanitized,
-        is_active: true
+        is_active: true,
+        created_at: now,
+        updated_at: now
+
+
       }])
       .select()
       .single();
