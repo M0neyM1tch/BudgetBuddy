@@ -55,7 +55,6 @@ export const validateTransaction = (data) => {
       errors.date = 'Invalid date format';
     } else {
       // ✅ ALLOW FUTURE DATES for recurring transactions
-      // Only block dates that are VERY far in the future (1 year+)
       const today = new Date();
       const oneYearFromNow = new Date(today);
       oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
@@ -64,7 +63,6 @@ export const validateTransaction = (data) => {
         errors.date = 'Date cannot be more than 1 year in the future';
       }
       
-      // Check if date is too old (e.g., before 1900)
       const minDate = new Date('1900-01-01');
       if (dateObj < minDate) {
         errors.date = 'Date is too far in the past';
@@ -82,7 +80,7 @@ export const validateTransaction = (data) => {
     sanitized.category = sanitizeString(data.category);
   }
 
-  // 5. Remove any unexpected fields (prevent mass assignment)
+  // 5. Remove any unexpected fields
   const allowedFields = ['description', 'amount', 'date', 'category', 'is_recurring', 'recurring_rule_id'];
   Object.keys(sanitized).forEach(key => {
     if (!allowedFields.includes(key)) {
@@ -104,7 +102,6 @@ export const validateGoal = (data) => {
   const errors = {};
   const sanitized = { ...data };
 
-  // Validate name
   if (!data.name || typeof data.name !== 'string') {
     errors.name = 'Goal name is required';
   } else if (data.name.trim().length === 0) {
@@ -115,7 +112,6 @@ export const validateGoal = (data) => {
     sanitized.name = sanitizeString(data.name);
   }
 
-  // Validate target amount
   if (data.target_amount === undefined || data.target_amount === null) {
     errors.target_amount = 'Target amount is required';
   } else {
@@ -129,7 +125,6 @@ export const validateGoal = (data) => {
     }
   }
 
-  // Validate current amount (optional, defaults to 0)
   if (data.current_amount !== undefined && data.current_amount !== null) {
     const numAmount = parseFloat(data.current_amount);
     if (isNaN(numAmount) || numAmount < 0) {
@@ -138,10 +133,9 @@ export const validateGoal = (data) => {
       sanitized.current_amount = numAmount;
     }
   } else {
-    sanitized.current_amount = 0; // ✅ Default to 0
+    sanitized.current_amount = 0;
   }
 
-  // Validate deadline (optional)
   if (data.deadline) {
     const deadlineDate = new Date(data.deadline);
     if (isNaN(deadlineDate.getTime())) {
@@ -155,26 +149,23 @@ export const validateGoal = (data) => {
       sanitized.deadline = data.deadline;
     }
   } else {
-    sanitized.deadline = null; // ✅ Explicitly set null
+    sanitized.deadline = null;
   }
 
-  // Validate category (optional, defaults to 🎯)
   if (data.category) {
     sanitized.category = sanitizeString(data.category);
   } else {
     sanitized.category = '🎯';
   }
 
-  // ✅ ALLOW color and created_at (don't strip them out)
-  // Remove unexpected fields EXCEPT color and created_at
   const allowedFields = [
     'name', 
     'target_amount', 
     'current_amount', 
     'deadline', 
     'category',
-    'color',          // ✅ Added
-    'created_at'      // ✅ Added
+    'color',
+    'created_at'
   ];
   
   Object.keys(sanitized).forEach(key => {
@@ -189,7 +180,6 @@ export const validateGoal = (data) => {
     sanitized
   };
 };
-
 
 /**
  * Validates recurring rule data
@@ -224,16 +214,39 @@ export const validateRecurringRule = (data) => {
   }
 
   // Validate frequency
-  const validFrequencies = ['monthly', 'biweekly'];
+  const validFrequencies = ['monthly', 'biweekly', 'weekly'];
   if (!validFrequencies.includes(data.frequency)) {
     errors.frequency = 'Invalid frequency';
+  } else {
+    sanitized.frequency = data.frequency;
   }
 
-  // Validate recur_day
+  // ✅ FIX: Only validate recur_day if frequency is monthly AND recur_day is provided
   if (data.frequency === 'monthly') {
-    const day = parseInt(data.recur_day);
-    if (isNaN(day) || day < 1 || day > 31) {
-      errors.recur_day = 'Day must be between 1-31';
+    if (data.recur_day !== undefined && data.recur_day !== null) {
+      const day = parseInt(data.recur_day);
+      if (isNaN(day) || day < 1 || day > 31) {
+        errors.recur_day = 'Day must be between 1-31';
+      } else {
+        sanitized.recur_day = day;
+      }
+    } else {
+      errors.recur_day = 'Day of month is required for monthly frequency';
+    }
+  } else {
+    // ✅ For biweekly/weekly, recur_day should be null
+    sanitized.recur_day = null;
+  }
+
+  // ✅ Validate next_run_date (required)
+  if (!data.next_run_date) {
+    errors.next_run_date = 'Next run date is required';
+  } else {
+    const dateObj = new Date(data.next_run_date);
+    if (isNaN(dateObj.getTime())) {
+      errors.next_run_date = 'Invalid date format';
+    } else {
+      sanitized.next_run_date = data.next_run_date;
     }
   }
 
@@ -244,8 +257,8 @@ export const validateRecurringRule = (data) => {
     sanitized.category = sanitizeString(data.category);
   }
 
-  // Remove unexpected fields
-  const allowedFields = ['description', 'amount', 'category', 'frequency', 'recur_day', 'next_run_date', 'is_active'];
+  // Only keep allowed fields
+  const allowedFields = ['description', 'amount', 'category', 'frequency', 'recur_day', 'next_run_date'];
   Object.keys(sanitized).forEach(key => {
     if (!allowedFields.includes(key)) {
       delete sanitized[key];
