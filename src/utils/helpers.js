@@ -1,5 +1,6 @@
-// Date and data transformation helpers
+// src/utils/helpers.js
 
+// Date and data transformation helpers
 export function toDailySeries(dates, seriesByDate) {
   return dates.map((d) => seriesByDate[d] || 0);
 }
@@ -67,37 +68,42 @@ export function formatCurrency(amount) {
   }).format(amount);
 }
 
-// Calculate annual projections from recurring transactions
-export const calculateAnnualProjections = (transactions) => {
-  // Filter only recurring transactions - check BOTH camelCase and snake_case
-  const recurringTxs = transactions.filter(tx => tx.isRecurring === true || tx.is_recurring === true);
+// ✅ FIXED: Calculate annual projections from RECURRING RULES
+export const calculateAnnualProjections = (recurringRules) => {
+  // Ensure we are working with an array
+  const rules = Array.isArray(recurringRules) ? recurringRules : [];
   
   let annualIncome = 0;
   let annualExpenses = 0;
   
-  recurringTxs.forEach(tx => {
-    const amount = Math.abs(Number(tx.amount));
-    const isIncome = tx.category === 'Income';
+  rules.forEach(rule => {
+    // Only count active rules
+    if (rule.is_active === false) return;
+
+    const amount = Math.abs(Number(rule.amount));
+    const isIncome = rule.category === 'Income';
     
-    // Normalize frequency to handle missing values
-    const frequency = tx.frequency || 'monthly';
+    // Normalize frequency
+    const frequency = rule.frequency || 'monthly';
     
-    // Determine annual multiplier based on actual frequency
+    // Determine annual multiplier
     let annualMultiplier = 12; // Default to monthly
     switch (frequency.toLowerCase()) {
       case 'biweekly':
         annualMultiplier = 26;
         break;
+      case 'weekly':
+        annualMultiplier = 52;
+        break;
       case 'monthly':
+      default:
         annualMultiplier = 12;
         break;
-      default:
-        annualMultiplier = 12; // Fallback to monthly
     }
     
     const annualAmount = amount * annualMultiplier;
     
-    console.log(`📊 ${tx.description}: ${frequency} × $${amount.toFixed(2)} = $${annualAmount.toFixed(2)} annually (${isIncome ? 'income' : 'expense'})`);
+    console.log(`📊 ${rule.description}: ${frequency} × $${amount.toFixed(2)} = $${annualAmount.toFixed(2)} annually`);
     
     if (isIncome) {
       annualIncome += annualAmount;
@@ -108,7 +114,6 @@ export const calculateAnnualProjections = (transactions) => {
   
   console.log(`💰 Total Annual Income: $${annualIncome.toFixed(2)}, Total Annual Expenses: $${annualExpenses.toFixed(2)}`);
   
-  // Calculate monthly average based on actual frequency distribution
   const monthlyIncome = annualIncome / 12;
   const monthlyExpenses = annualExpenses / 12;
   
@@ -121,10 +126,12 @@ export const calculateAnnualProjections = (transactions) => {
   };
 };
 
-// Generate comprehensive dashboard insights
-export function generateDashboardInsights(transactions, goals) {
+// ✅ UPDATE: Accept recurringRules as 3rd argument
+export function generateDashboardInsights(transactions, goals, recurringRules = []) {
   const { summaryIncome, summaryExpenses, summarySavings } = calculateSummaries(transactions);
-  const projections = calculateAnnualProjections(transactions);
+  
+  // ✅ PASS RULES HERE
+  const projections = calculateAnnualProjections(recurringRules);
   
   // Calculate metrics
   const netCashFlow = summaryIncome - summaryExpenses;

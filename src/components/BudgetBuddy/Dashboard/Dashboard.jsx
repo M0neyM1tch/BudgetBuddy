@@ -7,6 +7,7 @@ function Dashboard({ summaryIncome, summaryExpenses, summarySavings, transaction
   // State for collapsible sections
   const [shortcomingsCollapsed, setShortcomingsCollapsed] = useState(false);
   const [recommendationsCollapsed, setRecommendationsCollapsed] = useState(false);
+  
 
   if (transactions.length === 0) {
     return (

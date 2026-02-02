@@ -530,7 +530,6 @@ const renderLockedFeature = () => {
               summaryIncome={summaryIncome}
               summaryExpenses={summaryExpenses}
               summarySavings={summarySavings}
-              insights={generateDashboardInsights(transactions, goals)}
               recurringRules={recurringRules}
 
             />
@@ -541,13 +540,15 @@ const renderLockedFeature = () => {
           user ? (
             <Transactions
               transactions={transactions}
-              setTransactions={setTransactions}
-              categories={DEFAULT_CATEGORIES}
               goals={goals}
+              recurringRules={recurringRules}
               summaryIncome={summaryIncome}
               summaryExpenses={summaryExpenses}
               summarySavings={summarySavings}
               onTransactionChange={loadUserData}
+              setTransactions={setTransactions}
+              categories={DEFAULT_CATEGORIES}
+
             />
           ) : renderLockedFeature()
         )}
