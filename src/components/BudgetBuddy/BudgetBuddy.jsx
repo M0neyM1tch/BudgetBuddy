@@ -547,10 +547,7 @@ const renderLockedFeature = () => {
               summaryIncome={summaryIncome}
               summaryExpenses={summaryExpenses}
               summarySavings={summarySavings}
-              onAddTransaction={handleAddTransaction}
-              onDeleteTransaction={handleDeleteTransaction}
-              onUpdateCategory={handleUpdateCategory}
-              onCSVParsed={handleCSVParsed}
+              onTransactionChange={loadUserData}
             />
           ) : renderLockedFeature()
         )}

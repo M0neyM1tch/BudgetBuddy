@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import TransactionForm from './TransactionForm';
 import TransactionList from './TransactionList';
-import Tooltip from './Tooltip'; // ADD THIS IMPORT
+import Tooltip from './Tooltip';
 import {
   addTransaction as addTransactionDB,
   deleteTransaction as deleteTransactionDB,
@@ -22,6 +22,7 @@ function Transactions({
   summaryIncome,
   summarySavings,
   summaryExpenses,
+  onTransactionChange // ✅ ADDED THIS PROP
 }) {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,6 +98,12 @@ function Transactions({
         amount: '',
         category: 'Income',
       });
+
+      // ✅ REFRESH DASHBOARD
+      if (onTransactionChange) {
+        await onTransactionChange();
+      }
+
     } catch (error) {
       console.error('Error adding transaction:', error);
     }
@@ -114,29 +121,20 @@ function Transactions({
     }
 
     try {
-      // ✅ Calculate next_run_date based on frequency
+      // Calculate next_run_date based on frequency
       let nextRunDate;
       
       if (recurringForm.frequency === 'monthly') {
-        // For monthly: use the selected day of the current/next month
         const today = new Date();
         const targetDay = parseInt(recurringForm.recurDay);
-        
-        // Start with today, set to target day
         const nextDate = new Date(today.getFullYear(), today.getMonth(), targetDay);
-        
-        // If the date has already passed this month, move to next month
         if (nextDate <= today) {
           nextDate.setMonth(nextDate.getMonth() + 1);
         }
-        
         nextRunDate = nextDate.toISOString().split('T')[0];
         
       } else if (recurringForm.frequency === 'biweekly') {
-        // ✅ For biweekly, use the date picker value
         nextRunDate = recurringForm.nextOccurrenceDate;
-        
-        // Validate that it's not in the past
         const selectedDate = new Date(nextRunDate);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -147,19 +145,15 @@ function Transactions({
         }
       }
 
-      console.log('📝 Creating recurring rule with next_run_date:', nextRunDate);
-
-      // ✅ Create recurring rule in database
+      // Create recurring rule in database
       const newRule = await addRecurringRule(user.id, {
         description: recurringForm.description,
         amount: parseFloat(recurringForm.amount),
         category: recurringForm.category,
         frequency: recurringForm.frequency,
         recur_day: recurringForm.frequency === 'monthly' ? parseInt(recurringForm.recurDay) : null,
-        next_run_date: nextRunDate,  // ✅ Changed from next_occurrence_date
+        next_run_date: nextRunDate,
       });
-
-      console.log('✅ Recurring rule created:', newRule);
 
       // Update local state
       setRecurringTransactions(prev => [...prev, newRule]);
@@ -176,8 +170,12 @@ function Transactions({
         nextOccurrenceDate: new Date().toISOString().split('T')[0]
       });
 
-      // Reload recurring rules to show the new one
       await loadRecurringRules();
+
+      // ✅ REFRESH DASHBOARD
+      if (onTransactionChange) {
+        await onTransactionChange();
+      }
       
     } catch (error) {
       console.error('❌ Error adding recurring rule:', error);
@@ -185,52 +183,68 @@ function Transactions({
     }
   };
 
-  // ✅ FIX 1: Add missing handleDelete function
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this transaction?')) return;
     
     try {
-      await deleteTransactionDB(id, user.id);  // ✅ Added user.id
+      await deleteTransactionDB(id, user.id);
       setTransactions(transactions.filter(tx => tx.id !== id));
+
+      // ✅ REFRESH DASHBOARD
+      if (onTransactionChange) {
+        await onTransactionChange();
+      }
     } catch (error) {
       console.error('Error deleting transaction:', error);
       alert('Failed to delete transaction: ' + error.message);
     }
   };
 
-  // ✅ FIX 2: Add missing handleUpdateCategory function
   const handleUpdateCategory = async (id, newCategory) => {
     try {
-      await updateTransactionDB(id, { category: newCategory }, user.id);  // ✅ Added user.id
+      await updateTransactionDB(id, { category: newCategory }, user.id);
       setTransactions(
         transactions.map((tx) => (tx.id === id ? { ...tx, category: newCategory } : tx))
       );
+      
+      // ✅ REFRESH DASHBOARD (categories affect charts)
+      if (onTransactionChange) {
+        await onTransactionChange();
+      }
     } catch (error) {
       console.error('Error updating category:', error);
       alert('Failed to update category: ' + error.message);
     }
   };
 
-  // ✅ FIX 3: Add missing handleUpdateTransaction function
   const handleUpdateTransaction = async (id, updates) => {
     try {
-      await updateTransactionDB(id, updates, user.id);  // ✅ Added user.id
+      await updateTransactionDB(id, updates, user.id);
       setTransactions(
         transactions.map((tx) => (tx.id === id ? { ...tx, ...updates } : tx))
       );
+
+      // ✅ REFRESH DASHBOARD
+      if (onTransactionChange) {
+        await onTransactionChange();
+      }
     } catch (error) {
       console.error('Error updating transaction:', error);
       alert('Failed to update transaction: ' + error.message);
     }
   };
 
-  // ✅ FIX 4: Fix deleteRecurringRule to include user.id
   const handleDeleteRecurringRule = async (ruleId) => {
     if (!window.confirm('Delete this recurring transaction?')) return;
 
     try {
-      await deleteRecurringRule(ruleId, user.id);  // ✅ Added user.id
+      await deleteRecurringRule(ruleId, user.id);
       setRecurringTransactions((prev) => prev.filter((r) => r.id !== ruleId));
+
+      // ✅ REFRESH DASHBOARD
+      if (onTransactionChange) {
+        await onTransactionChange();
+      }
     } catch (error) {
       console.error('Error deleting recurring rule:', error);
       alert('Failed to delete recurring transaction: ' + error.message);
@@ -239,7 +253,7 @@ function Transactions({
 
   return (
     <div className="transactions-container">
-      {/* PRIMARY: Transaction Input - WITH TOOLTIP */}
+      {/* PRIMARY: Transaction Input */}
       <div className="primary-section">
         <h2>
           Variable Transactions
@@ -260,7 +274,7 @@ function Transactions({
         />
       </div>
 
-      {/* PRIMARY: Recurring Transactions - WITH TOOLTIP */}
+      {/* PRIMARY: Recurring Transactions */}
       <div className="primary-section">
         <h2>
           Recurring Transactions
@@ -309,93 +323,79 @@ function Transactions({
               type="date"
               value={recurringForm.nextOccurrenceDate}
               onChange={(e) => setRecurringForm({ ...recurringForm, nextOccurrenceDate: e.target.value })}
-              placeholder="Next Occurrence"
+              title="Select the next date this transaction occurs"
             />
           )}
 
-          {/* MONTHLY: Day of month picker */}
+          {/* MONTHLY: Day selector */}
           {recurringForm.frequency === 'monthly' && (
             <select
               value={recurringForm.recurDay}
               onChange={(e) => setRecurringForm({ ...recurringForm, recurDay: e.target.value })}
             >
-              {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                <option key={day} value={day}>
-                  {day}{day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th'} of month
-                </option>
+              {[...Array(31)].map((_, i) => (
+                <option key={i + 1} value={i + 1}>{i + 1}{['st','nd','rd'][((i+1)%10)-1] || 'th'} of month</option>
               ))}
             </select>
           )}
 
-          <button onClick={handleAddRecurring}>Add Recurring</button>
+          <button onClick={handleAddRecurring} className="btn-recurring">
+            ADD RECURRING
+          </button>
         </div>
 
-        {/* Display Active Recurring Transactions */}
+        {/* List of Active Recurring Rules */}
         {recurringTransactions.length > 0 && (
-          <div className="active-recurring-list" style={{ marginTop: '20px' }}>
-            <h3>Active Recurring Transactions</h3>
-            {recurringTransactions.map((rec) => (
-              <div
-                key={rec.id}
-                className="recurring-item"
-                style={{
-                  background: '#374151',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  marginBottom: '8px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}
-              >
-                <span>{rec.description}</span>
-                <span>${rec.amount.toFixed(2)}</span>
-                <span>{rec.category}</span>
-                <span style={{ fontSize: '12px', color: '#9ca3af' }}>
-                  {rec.frequency === 'monthly' ? `Monthly on day ${rec.recur_day}` : 'Biweekly (every 14 days)'}
-                </span>
-                <span style={{ fontSize: '12px', color: '#10b981' }}>
-                  Next: {rec.next_run_date}
-                </span>
-                <button
-                  onClick={() => handleDeleteRecurringRule(rec.id)}
-                  style={{
-                    background: '#ef4444',
-                    color: 'white',
-                    border: 'none',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Delete
-                </button>
-              </div>
-            ))}
+          <div className="recurring-list">
+            <h3>Active Recurring Rules</h3>
+            <ul>
+              {recurringTransactions.map(rule => (
+                <li key={rule.id} className="recurring-item">
+                  <div className="recurring-info">
+                    <strong>{rule.description}</strong>
+                    <span className={rule.category === 'Income' ? 'income-text' : 'expense-text'}>
+                      {rule.category === 'Income' ? '+' : '-'}${Math.abs(rule.amount).toFixed(2)}
+                    </span>
+                    <span className="recurring-meta">
+                      {rule.frequency === 'monthly' 
+                        ? `Monthly (Day ${rule.recur_day})` 
+                        : 'Biweekly'}
+                    </span>
+                    <span className="recurring-next">
+                      Next: {rule.next_run_date}
+                    </span>
+                  </div>
+                  <button 
+                    className="btn-delete-small"
+                    onClick={() => handleDeleteRecurringRule(rule.id)}
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>
 
-      <div className="section-divider"></div>
+      {/* SEARCH & LIST */}
+      <div className="secondary-section">
+        <h2>Search Transactions</h2>
+        <input
+          type="text"
+          placeholder="Search by description, category or amount"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="search-input"
+        />
 
-      {/* Search Transactions */}
-      <h2>Search Transactions</h2>
-      <input
-        type="text"
-        className="search-input"
-        placeholder="Search by description, category or amount"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-      />
-
-      <TransactionList
-        transactions={filteredTransactions}
-        onDelete={handleDelete}
-        onUpdateCategory={handleUpdateCategory}
-        onUpdateTransaction={handleUpdateTransaction}
-        categories={allCategories}
-        goals={goals}
-      />
+        <TransactionList
+          transactions={filteredTransactions}
+          onDelete={handleDelete} // ✅ FIXED: Passed handleDelete instead of handleDeleteTransaction
+          onUpdateCategory={handleUpdateCategory} // ✅ FIXED: Passed update function
+          onUpdateTransaction={handleUpdateTransaction} // ✅ FIXED: Passed update function
+        />
+      </div>
     </div>
   );
 }

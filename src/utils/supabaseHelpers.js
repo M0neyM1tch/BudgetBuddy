@@ -204,53 +204,31 @@ export const fetchRecurringRules = async (userId) => {
 
 export const addRecurringRule = async (userId, rule) => {
   try {
-    console.log('🔍 DEBUG - Input rule:', rule);
-    
     const { isValid, errors, sanitized } = validateRecurringRule(rule);
-    
-    console.log('🔍 DEBUG - Validation result:', { isValid, errors, sanitized });
     
     if (!isValid) {
       const errorMessage = Object.values(errors).join(', ');
-      console.error('❌ Validation errors:', errors);
       throw new Error(`Validation failed: ${errorMessage}`);
     }
 
-    const dataToInsert = {
-      user_id: userId,
-      description: sanitized.description,
-      amount: sanitized.amount,
-      category: sanitized.category,
-      frequency: sanitized.frequency,
-      recur_day: sanitized.recur_day,
-      next_run_date: sanitized.next_run_date,
-      is_active: true
-    };
-    
-    console.log('🔍 DEBUG - Data being inserted:', dataToInsert);
-
     const { data, error } = await supabase
       .from('recurring_rules')
-      .insert([dataToInsert])
+      .insert([{
+        user_id: userId,
+        ...sanitized,
+        is_active: true
+      }])
       .select()
       .single();
 
-    if (error) {
-      console.error('❌ Supabase error details:', error);
-      console.error('❌ Error message:', error.message);
-      console.error('❌ Error hint:', error.hint);
-      console.error('❌ Error details:', error.details);
-      throw error;
-    }
-    
-    console.log('✅ Successfully inserted:', data);
+    if (error) throw error;
     return data;
   } catch (error) {
-    console.error('❌ Full error:', error);
     const userMessage = handleSupabaseError(error);
     throw new Error(userMessage);
   }
 };
+
 
 export const updateRecurringRule = async (ruleId, updates, userId = null) => {
   try {
