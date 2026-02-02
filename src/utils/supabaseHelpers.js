@@ -5,9 +5,6 @@ import { validateTransaction, validateGoal, validateRecurringRule } from '../lib
 // ERROR HANDLING
 // ============================================
 
-/**
- * Converts Supabase errors into user-friendly messages
- */
 export const handleSupabaseError = (error) => {
   console.error('Supabase error:', error);
   
@@ -35,12 +32,6 @@ export const handleSupabaseError = (error) => {
 // AUDIT LOGS
 // ============================================
 
-/**
- * Fetch audit logs for current user
- * @param {string} userId - Current user ID
- * @param {number} limit - Max number of logs to fetch (default 50)
- * @param {string} tableFilter - Optional: filter by table name
- */
 export const fetchAuditLogs = async (userId, limit = 50, tableFilter = null) => {
   try {
     let query = supabase
@@ -86,7 +77,6 @@ export const fetchTransactions = async (userId) => {
 
 export const addTransaction = async (userId, transaction) => {
   try {
-    // Validate and sanitize input
     const { isValid, errors, sanitized } = validateTransaction(transaction);
     
     if (!isValid) {
@@ -111,20 +101,60 @@ export const addTransaction = async (userId, transaction) => {
   }
 };
 
-export const updateTransaction = async (transactionId, updates) => {
+export const updateTransaction = async (transactionId, updates, userId) => {
   try {
-    // Validate and sanitize input
-    const { isValid, errors, sanitized } = validateTransaction(updates);
+    // ✅ Partial validation - only validate fields being updated
+    const sanitized = {};
     
-    if (!isValid) {
-      const errorMessage = Object.values(errors).join(', ');
-      throw new Error(`Validation failed: ${errorMessage}`);
+    if (updates.description !== undefined) {
+      if (typeof updates.description !== 'string' || updates.description.trim().length === 0) {
+        throw new Error('Description cannot be empty');
+      }
+      if (updates.description.length > 200) {
+        throw new Error('Description must be less than 200 characters');
+      }
+      sanitized.description = updates.description.trim();
+    }
+    
+    if (updates.amount !== undefined) {
+      const numAmount = parseFloat(updates.amount);
+      if (isNaN(numAmount) || numAmount === 0) {
+        throw new Error('Amount must be a valid non-zero number');
+      }
+      if (Math.abs(numAmount) > 10000000) {
+        throw new Error('Amount exceeds maximum ($10M)');
+      }
+      sanitized.amount = numAmount;
+    }
+    
+    if (updates.date !== undefined) {
+      const dateObj = new Date(updates.date);
+      if (isNaN(dateObj.getTime())) {
+        throw new Error('Invalid date format');
+      }
+      sanitized.date = updates.date;
+    }
+    
+    if (updates.category !== undefined) {
+      if (typeof updates.category !== 'string' || updates.category.length > 50) {
+        throw new Error('Invalid category');
+      }
+      sanitized.category = updates.category.trim();
+    }
+    
+    if (updates.is_recurring !== undefined) {
+      sanitized.is_recurring = Boolean(updates.is_recurring);
+    }
+    
+    if (updates.recurring_rule_id !== undefined) {
+      sanitized.recurring_rule_id = updates.recurring_rule_id;
     }
 
     const { data, error } = await supabase
       .from('transactions')
       .update(sanitized)
       .eq('id', transactionId)
+      .eq('user_id', userId)  // ✅ Security
       .select()
       .single();
 
@@ -136,12 +166,13 @@ export const updateTransaction = async (transactionId, updates) => {
   }
 };
 
-export const deleteTransaction = async (transactionId) => {
+export const deleteTransaction = async (transactionId, userId) => {
   try {
     const { error } = await supabase
       .from('transactions')
       .delete()
-      .eq('id', transactionId);
+      .eq('id', transactionId)
+      .eq('user_id', userId);  // ✅ Security
 
     if (error) throw error;
   } catch (error) {
@@ -173,7 +204,6 @@ export const fetchRecurringRules = async (userId) => {
 
 export const addRecurringRule = async (userId, rule) => {
   try {
-    // Validate and sanitize input
     const { isValid, errors, sanitized } = validateRecurringRule(rule);
     
     if (!isValid) {
@@ -186,11 +216,7 @@ export const addRecurringRule = async (userId, rule) => {
       .insert([{
         user_id: userId,
         ...sanitized,
-        is_active: true,
-        created_at: now,
-        updated_at: now
-
-
+        is_active: true
       }])
       .select()
       .single();
@@ -203,12 +229,19 @@ export const addRecurringRule = async (userId, rule) => {
   }
 };
 
-export const updateRecurringRule = async (ruleId, updates) => {
+export const updateRecurringRule = async (ruleId, updates, userId = null) => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('recurring_rules')
       .update(updates)
-      .eq('id', ruleId)
+      .eq('id', ruleId);
+    
+    // ✅ Add user_id check if provided (for manual updates)
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+    
+    const { data, error } = await query
       .select()
       .single();
 
@@ -220,12 +253,13 @@ export const updateRecurringRule = async (ruleId, updates) => {
   }
 };
 
-export const deleteRecurringRule = async (ruleId) => {
+export const deleteRecurringRule = async (ruleId, userId) => {
   try {
     const { error } = await supabase
       .from('recurring_rules')
       .update({ is_active: false })
-      .eq('id', ruleId);
+      .eq('id', ruleId)
+      .eq('user_id', userId);  // ✅ Security
 
     if (error) throw error;
   } catch (error) {
@@ -234,108 +268,129 @@ export const deleteRecurringRule = async (ruleId) => {
   }
 };
 
-
-
-/**
- * Process recurring transactions that are due
- * 
- * KEY FIXES:
- * 1. Transaction date = rule.next_run_date (not today)
- * 2. Idempotency check uses rule.next_run_date (not today)  
- * 3. Next run calculated from rule.next_run_date (not today)
- * 
- * This preserves the exact 14-day cadence regardless of when the processor runs
- */
 export const processDueRecurringTransactions = async (userId) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const todayString = today.toISOString().split('T')[0];
 
-    // Fetch all active recurring rules that are due (next_run_date <= today)
+    console.log('🔄 Processing recurring transactions for date:', todayString);
+
     const { data: dueRules, error: fetchError } = await supabase
       .from('recurring_rules')
       .select('*')
       .eq('user_id', userId)
       .eq('is_active', true)
-      .lte('next_run_date', today);
+      .lte('next_run_date', todayString);
 
     if (fetchError) throw fetchError;
-    if (!dueRules || dueRules.length === 0) return [];
+    
+    if (!dueRules || dueRules.length === 0) {
+      console.log('✓ No due recurring transactions found');
+      return [];
+    }
+
+    console.log(`📋 Found ${dueRules.length} due recurring rule(s)`);
 
     const createdTransactions = [];
+    const errors = [];
 
     for (const rule of dueRules) {
-      // ✅ FIX 1: Check for duplicate using the SCHEDULED date (rule.next_run_date)
-      const { data: existingTransaction } = await supabase
-        .from('transactions')
-        .select('id')
-        .eq('recurring_rule_id', rule.id)
-        .eq('date', rule.next_run_date)  // ✅ CHANGED: Use scheduled date, not today
-        .maybeSingle();
+      try {
+        const { data: existingTransaction } = await supabase
+          .from('transactions')
+          .select('id')
+          .eq('recurring_rule_id', rule.id)
+          .eq('date', rule.next_run_date)
+          .maybeSingle();
 
-      if (existingTransaction) {
-        console.log(`✓ Transaction already exists for rule ${rule.id} on ${rule.next_run_date}, skipping.`);
-        continue;
+        if (existingTransaction) {
+          console.log(`⏭️  Transaction already exists for "${rule.description}" on ${rule.next_run_date}`);
+          
+          const nextDate = calculateNextRunDate(rule);
+          if (nextDate !== rule.next_run_date) {
+            await updateRecurringRule(rule.id, { next_run_date: nextDate });
+            console.log(`📅 Updated next run date to ${nextDate}`);
+          }
+          continue;
+        }
+
+        const transaction = await addTransaction(userId, {
+          date: rule.next_run_date,
+          description: rule.description,
+          amount: rule.amount,
+          category: rule.category,
+          is_recurring: true,
+          recurring_rule_id: rule.id
+        });
+
+        createdTransactions.push(transaction);
+        console.log(`✅ Created recurring transaction: "${rule.description}" for ${rule.next_run_date}`);
+
+        const nextDate = calculateNextRunDate(rule);
+
+        await updateRecurringRule(rule.id, { next_run_date: nextDate });
+
+        console.log(`📅 Next occurrence for "${rule.description}": ${nextDate}`);
+        
+      } catch (ruleError) {
+        console.error(`❌ Error processing rule "${rule.description}":`, ruleError);
+        errors.push({
+          rule: rule.description,
+          error: ruleError.message
+        });
       }
+    }
 
-      // ✅ FIX 2: Create transaction for the SCHEDULED date (rule.next_run_date)
-      const transaction = await addTransaction(userId, {
-        date: rule.next_run_date,  // ✅ CHANGED: Use scheduled date, not today
-        description: rule.description,
-        amount: rule.amount,
-        category: rule.category,
-        is_recurring: true,
-        recurring_rule_id: rule.id
-      });
+    if (errors.length > 0) {
+      console.warn('⚠️ Some recurring transactions failed:', errors);
+    }
 
-      createdTransactions.push(transaction);
-      console.log(`✓ Created transaction for rule "${rule.description}" on ${rule.next_run_date}`);
-
-      // ✅ FIX 3: Calculate next run from the SCHEDULED date (rule.next_run_date)
-      const nextDate = calculateNextRunDate(rule.frequency, rule.recur_day, rule.next_run_date);  // ✅ CHANGED
-
-      // Update recurring rule
-      await updateRecurringRule(rule.id, {
-        next_run_date: nextDate
-      });
-
-      console.log(`✓ Updated rule "${rule.description}" - next run: ${nextDate}`);
+    if (createdTransactions.length > 0) {
+      console.log(`✅ Successfully created ${createdTransactions.length} recurring transaction(s)`);
     }
 
     return createdTransactions;
+    
   } catch (error) {
-    console.error('Error processing due recurring transactions:', error);
+    console.error('❌ Error processing recurring transactions:', error);
     const userMessage = handleSupabaseError(error);
     throw new Error(userMessage);
   }
 };
 
-
-
-
-
-const calculateNextRunDate = (frequency, recurDay, currentDate) => {
-  const current = new Date(currentDate);
+const calculateNextRunDate = (rule) => {
+  const currentDate = new Date(rule.next_run_date + 'T00:00:00.000Z');
   
-  if (frequency === 'monthly') {
-    const next = new Date(current);
-    next.setMonth(next.getMonth() + 1);
+  if (rule.frequency === 'monthly') {
+    const nextDate = new Date(currentDate);
+    nextDate.setUTCMonth(nextDate.getUTCMonth() + 1);
     
-    // Clamp to last day of month to prevent overflow
-    const lastDayOfMonth = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
-    const clampedDay = Math.min(parseInt(recurDay), lastDayOfMonth);
-    next.setDate(clampedDay);
+    if (rule.recur_day) {
+      const targetDay = parseInt(rule.recur_day);
+      const lastDayOfMonth = new Date(
+        Date.UTC(nextDate.getUTCFullYear(), nextDate.getUTCMonth() + 1, 0)
+      ).getUTCDate();
+      const clampedDay = Math.min(targetDay, lastDayOfMonth);
+      nextDate.setUTCDate(clampedDay);
+    }
     
-    return next.toISOString().split('T')[0];
-  } else if (frequency === 'biweekly') {
-    // 14 days from now
-    const next = new Date(current);
-    next.setDate(next.getDate() + 14);
-    return next.toISOString().split('T')[0];
+    return nextDate.toISOString().split('T')[0];
+    
+  } else if (rule.frequency === 'biweekly') {
+    const nextDate = new Date(currentDate);
+    nextDate.setUTCDate(nextDate.getUTCDate() + 14);
+    return nextDate.toISOString().split('T')[0];
+    
+  } else if (rule.frequency === 'weekly') {
+    const nextDate = new Date(currentDate);
+    nextDate.setUTCDate(nextDate.getUTCDate() + 7);
+    return nextDate.toISOString().split('T')[0];
   }
   
-  return currentDate;
+  console.warn('⚠️ Unknown frequency:', rule.frequency);
+  return rule.next_run_date;
 };
-
 
 // ============================================
 // CATEGORIES
@@ -397,7 +452,6 @@ export const fetchGoals = async (userId) => {
 
 export const addGoal = async (goal, userId) => {
   try {
-    // ✅ FIX: Validate BEFORE adding userId
     const goalForValidation = {
       name: goal.name,
       target_amount: goal.target_amount,
@@ -414,7 +468,6 @@ export const addGoal = async (goal, userId) => {
       throw new Error(`Validation failed: ${errorMessage}`);
     }
 
-    // ✅ Now insert with userId and additional fields
     const { data, error } = await supabase
       .from('goals')
       .insert([{
@@ -441,7 +494,7 @@ export const updateGoal = async (goalId, updates, userId) => {
       .from('goals')
       .update(updates)
       .eq('id', goalId)
-      .eq('user_id', userId) // ✅ Security: ensure user owns this goal
+      .eq('user_id', userId)
       .select()
       .single();
 
@@ -460,10 +513,10 @@ export const deleteGoal = async (goalId, userId) => {
       .from('goals')
       .delete()
       .eq('id', goalId)
-      .eq('user_id', userId); // ✅ Security: ensure user owns this goal
+      .eq('user_id', userId);
 
     if (error) throw error;
-    return true; // ✅ Return success indicator
+    return true;
   } catch (error) {
     console.error('Supabase error:', error);
     const userMessage = handleSupabaseError(error);

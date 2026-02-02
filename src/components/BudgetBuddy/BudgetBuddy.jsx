@@ -243,7 +243,7 @@ function BudgetBuddy() {
   const handleDeleteTransaction = async (id) => {
     if (window.confirm('Delete this transaction?')) {
       try {
-        await deleteTransactionDB(id);
+        await deleteTransactionDB(id, user.id);
         setTransactions(transactions.filter((tx) => tx.id !== id));
         console.log('✅ Transaction deleted');
       } catch (error) {
@@ -257,7 +257,7 @@ function BudgetBuddy() {
     console.log('🔄 Updating category for transaction:', transactionId, 'to:', newCategory);
 
     try {
-      await updateTransactionDB(transactionId, { category: newCategory });
+      await updateTransactionDB(transactionId, { category: newCategory }, user.id);
 
       const updatedTransactions = transactions.map((tx) => {
         if (tx.id === transactionId) {
