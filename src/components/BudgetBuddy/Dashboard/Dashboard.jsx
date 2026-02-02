@@ -20,71 +20,12 @@ function Dashboard({ summaryIncome, summaryExpenses, summarySavings, transaction
     );
   }
 
-
-  // Calculate projections from recurring rules (same as Analytics tab)
-  const calculateRecurringProjections = () => {
-    let annualIncome = 0;
-    let annualExpenses = 0;
-
-
-    recurringRules.forEach(rule => {
-      const amount = Math.abs(Number(rule.amount));
-      let multiplier = 0;
-
-
-      switch(rule.frequency) {
-        case 'daily':
-          multiplier = 365;
-          break;
-        case 'weekly':
-          multiplier = 52;
-          break;
-        case 'biweekly':
-          multiplier = 26;
-          break;
-        case 'monthly':
-          multiplier = 12;
-          break;
-        case 'quarterly':
-          multiplier = 4;
-          break;
-        case 'yearly':
-          multiplier = 1;
-          break;
-        default:
-          multiplier = 0;
-      }
-
-
-      const annualAmount = amount * multiplier;
-
-
-      if (rule.category === 'Income') {
-        annualIncome += annualAmount;
-      } else if (rule.category === 'Expenses') {
-        annualExpenses += annualAmount;
-      }
-    });
-
-
-    return {
-      annualIncome,
-      monthlyIncome: annualIncome / 12,
-      annualExpenses,
-      monthlyExpenses: annualExpenses / 12,
-      netAnnual: annualIncome - annualExpenses,
-    };
-  };
-
-
-  const projections = calculateRecurringProjections();
-  const insights = generateDashboardInsights(transactions, goals || []);
+  // ✅ FIX: Call helper with recurringRules. 
+  // DO NOT define calculateRecurringProjections locally.
+  const insights = generateDashboardInsights(transactions, goals || [], recurringRules);
   
-  // Override projections with recurring rules data
-  insights.projections = projections;
-
-
-  const { healthScore, keyMetrics, shortcomings, recommendations } = insights;
+  // ✅ FIX: Extract projections directly from insights
+  const { healthScore, keyMetrics, shortcomings, recommendations, projections } = insights;
 
 
   return (
