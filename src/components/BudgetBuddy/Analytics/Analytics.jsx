@@ -8,6 +8,9 @@ function Analytics({ transactions, recurringRules = [] }) {
   const [timeFilter, setTimeFilter] = useState('all');
   const [animatedValues, setAnimatedValues] = useState({});
 
+  // ✅ Always calculate projections from recurring rules
+  const projections = calculateAnnualProjections(recurringRules);
+
   // Get unique months from transactions
   const months = getMonthsList(transactions);
 
@@ -379,15 +382,96 @@ function Analytics({ transactions, recurringRules = [] }) {
     }
   };
 
-  // ✅ FIX: Use imported helper instead of defining locally
-  const projections = calculateAnnualProjections(recurringRules);
-
-  if (transactions.length === 0) {
+  // ✅ FIX: Only show "no data" if BOTH transactions AND recurring rules are empty
+  if (transactions.length === 0 && recurringRules.length === 0) {
     return (
       <div className="analytics-container">
         <div className="no-data">
           <h2>📊 No transaction data yet</h2>
-          <p>Start adding transactions to see your financial analytics!</p>
+          <p>Start adding transactions or set up recurring transactions to see your financial analytics!</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ FIX: Show only recurring projections if no variable transactions
+  if (transactions.length === 0 && recurringRules.length > 0) {
+    return (
+      <div className="analytics-container">
+        <div className="no-data">
+          <h2>📊 Recurring Transactions Set Up</h2>
+          <p>Add variable transactions to see detailed charts and analytics!</p>
+        </div>
+
+        {/* Recurring Projections */}
+        <div className="recurring-projections-section">
+          <h2>🔄 Fixed Income & Expenses Projection</h2>
+          
+          <div className="projection-grid">
+            <div className="projection-card income-card">
+              <div className="projection-icon">💰</div>
+              <h3>📈 Annual Recurring Income</h3>
+              <div className="projection-amount">${projections.annualIncome.toFixed(2)}</div>
+              <div className="projection-monthly">Monthly Avg: ${projections.monthlyIncome.toFixed(2)}</div>
+            </div>
+
+            <div className="projection-card expense-card">
+              <div className="projection-icon">💸</div>
+              <h3>📉 Annual Recurring Expenses</h3>
+              <div className="projection-amount">${projections.annualExpenses.toFixed(2)}</div>
+              <div className="projection-monthly">Monthly Avg: ${projections.monthlyExpenses.toFixed(2)}</div>
+            </div>
+
+            <div className={`projection-card net-card ${projections.netAnnual >= 0 ? 'positive' : 'negative'}`}>
+              <div className="projection-icon">📊</div>
+              <h3>💼 Net Annual Projection</h3>
+              <div className="projection-amount">${projections.netAnnual.toFixed(2)}</div>
+              <div className="projection-monthly">Monthly Net: ${(projections.netAnnual / 12).toFixed(2)}</div>
+            </div>
+          </div>
+
+          <div className="projection-breakdown">
+            <h3>Recurring Transactions Breakdown</h3>
+            <div className="recurring-table-wrapper">
+              <table className="recurring-table">
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Frequency</th>
+                    <th>Amount per Period</th>
+                    <th>Annual Projection</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recurringRules.map((rule, index) => {
+                    const amount = Math.abs(Number(rule.amount));
+                    let multiplier = 0;
+                    
+                    switch(rule.frequency.toLowerCase()) {
+                      case 'daily': multiplier = 365; break;
+                      case 'weekly': multiplier = 52; break;
+                      case 'biweekly': multiplier = 26; break;
+                      case 'monthly': multiplier = 12; break;
+                      case 'quarterly': multiplier = 4; break;
+                      case 'yearly': multiplier = 1; break;
+                      default: multiplier = 0;
+                    }
+
+                    return (
+                      <tr key={index} className={rule.category === 'Income' ? 'income-row' : 'expense-row'}>
+                        <td>🔄 {rule.description}</td>
+                        <td>{rule.category}</td>
+                        <td>{rule.frequency}</td>
+                        <td>${amount.toFixed(2)}</td>
+                        <td>${(amount * multiplier).toFixed(2)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     );
