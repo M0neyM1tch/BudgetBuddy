@@ -8,25 +8,22 @@ function Dashboard({ summaryIncome, summaryExpenses, summarySavings, transaction
   const [shortcomingsCollapsed, setShortcomingsCollapsed] = useState(false);
   const [recommendationsCollapsed, setRecommendationsCollapsed] = useState(false);
   
+  // ✅ FIX: Always calculate insights, even with 0 transactions
+  // This allows recurring rules to show projections
+  const insights = generateDashboardInsights(transactions, goals || [], recurringRules);
+  const { healthScore, keyMetrics, shortcomings, recommendations, projections } = insights;
 
-  if (transactions.length === 0) {
+  // ✅ FIX: Only show "no transactions" message if BOTH transactions AND recurring rules are empty
+  if (transactions.length === 0 && recurringRules.length === 0) {
     return (
       <div className="dashboard">
         <div className="dashboard-empty">
           <h2>📊 Welcome to Your Dashboard</h2>
-          <p>No transactions yet. Add your first transaction to get started!</p>
+          <p>No transactions yet. Add your first transaction or set up recurring transactions to get started!</p>
         </div>
       </div>
     );
   }
-
-  // ✅ FIX: Call helper with recurringRules. 
-  // DO NOT define calculateRecurringProjections locally.
-  const insights = generateDashboardInsights(transactions, goals || [], recurringRules);
-  
-  // ✅ FIX: Extract projections directly from insights
-  const { healthScore, keyMetrics, shortcomings, recommendations, projections } = insights;
-
 
   return (
     <div className="dashboard">
