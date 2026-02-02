@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Line, Bar } from 'react-chartjs-2';
-import { toDailySeries, cumulative, getMonthsList } from '../../../utils/helpers';
+import { toDailySeries, cumulative, getMonthsList, calculateAnnualProjections } from '../../../utils/helpers';
 import './Analytics.css';
 import { calculateSummaries } from '../../../utils/helpers';
 
@@ -379,44 +379,8 @@ function Analytics({ transactions, recurringRules = [] }) {
     }
   };
 
-  // Recurring projections calculation
-  const calculateRecurringProjections = () => {
-    let annualIncome = 0;
-    let annualExpenses = 0;
-
-    recurringRules.forEach(rule => {
-      const amount = Math.abs(Number(rule.amount));
-      let multiplier = 0;
-
-      switch(rule.frequency) {
-        case 'daily': multiplier = 365; break;
-        case 'weekly': multiplier = 52; break;
-        case 'biweekly': multiplier = 26; break;
-        case 'monthly': multiplier = 12; break;
-        case 'quarterly': multiplier = 4; break;
-        case 'yearly': multiplier = 1; break;
-        default: multiplier = 0;
-      }
-
-      const annualAmount = amount * multiplier;
-
-      if (rule.category === 'Income') {
-        annualIncome += annualAmount;
-      } else if (rule.category === 'Expenses') {
-        annualExpenses += annualAmount;
-      }
-    });
-
-    return {
-      annualIncome,
-      monthlyIncome: annualIncome / 12,
-      annualExpenses,
-      monthlyExpenses: annualExpenses / 12,
-      netAnnual: annualIncome - annualExpenses,
-    };
-  };
-
-  const projections = calculateRecurringProjections();
+  // ✅ FIX: Use imported helper instead of defining locally
+  const projections = calculateAnnualProjections(recurringRules);
 
   if (transactions.length === 0) {
     return (
@@ -664,7 +628,6 @@ function Analytics({ transactions, recurringRules = [] }) {
 
           <div className="projection-breakdown">
             <h3>Recurring Transactions Breakdown</h3>
-            {/* ✅ WRAPPER ADDED HERE FOR MOBILE SCROLLING */}
             <div className="recurring-table-wrapper">
               <table className="recurring-table">
                 <thead>
@@ -681,7 +644,7 @@ function Analytics({ transactions, recurringRules = [] }) {
                     const amount = Math.abs(Number(rule.amount));
                     let multiplier = 0;
                     
-                    switch(rule.frequency) {
+                    switch(rule.frequency.toLowerCase()) {
                       case 'daily': multiplier = 365; break;
                       case 'weekly': multiplier = 52; break;
                       case 'biweekly': multiplier = 26; break;
