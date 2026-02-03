@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import BudgetBuddy from './components/BudgetBuddy/BudgetBuddy';
+import LandingPage from './components/LandingPage/LandingPage';
 import Auth from './components/Auth/Auth';
 import AdminAnalytics from './admin/AdminAnalytics';
 import PrivacyPolicy from './components/Legal/PrivacyPolicy';
@@ -33,9 +34,23 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path="/" element={<BudgetBuddy />} />  {/* ⬅️ ONLY THIS LINE CHANGED */}
-        <Route path="/login" element={!user ? <Auth /> : <Navigate to="/" />} />
+        {/* Root route: Landing page for logged-out, Dashboard for logged-in */}
+        <Route 
+          path="/" 
+          element={user ? <Navigate to="/dashboard" /> : <LandingPage />} 
+        />
+        
+        {/* Dashboard route - requires authentication */}
+        <Route 
+          path="/dashboard" 
+          element={user ? <BudgetBuddy /> : <Navigate to="/login" />} 
+        />
+        
+        {/* Auth routes */}
+        <Route path="/login" element={!user ? <Auth /> : <Navigate to="/dashboard" />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        
+        {/* Admin route */}
         <Route path="/admin" element={user ? <AdminAnalytics /> : <Navigate to="/login" />} />
         
         {/* Legal Pages - Accessible to everyone */}
