@@ -803,9 +803,20 @@
 }
 
 @media (max-width: 480px) {
+  /* Aggressively reduce spacing on very small screens */
+  .landing-nav-content {
+    padding: 0 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .nav-logo {
+    width: 32px;
+    height: 32px;
+  }
+
   .cta-btn-nav {
-    font-size: 12px;
-    padding: 8px 12px;
+    font-size: 11px;
+    padding: 8px 10px;
   }
 
   .hero-title {
