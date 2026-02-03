@@ -126,17 +126,20 @@ export const calculateAnnualProjections = (recurringRules) => {
   };
 };
 
-// ✅ UPDATE: Accept recurringRules as 3rd argument
+// ✅ UPDATED: Combine actual transactions + recurring projections for health score
 export function generateDashboardInsights(transactions, goals, recurringRules = []) {
+  // Get actual transaction summaries
   const { summaryIncome, summaryExpenses, summarySavings } = calculateSummaries(transactions);
   
-  // ✅ PASS RULES HERE
+  // Get projected recurring values
   const projections = calculateAnnualProjections(recurringRules);
   
-  // Calculate metrics
-  const netCashFlow = summaryIncome - summaryExpenses;
-  const savingsRate = summaryIncome > 0 ? (summarySavings / summaryIncome) * 100 : 0;
-  const monthlyRunway = summaryExpenses > 0 ? summarySavings / summaryExpenses : 0;
+  // ✅ COMBINE actual transactions + recurring projections for health score
+  const totalMonthlyIncome = summaryIncome + projections.monthlyIncome;
+  const totalMonthlyExpenses = summaryExpenses + projections.monthlyExpenses;
+  const netCashFlow = totalMonthlyIncome - totalMonthlyExpenses;
+  const savingsRate = totalMonthlyIncome > 0 ? (summarySavings / totalMonthlyIncome) * 100 : 0;
+  const monthlyRunway = totalMonthlyExpenses > 0 ? summarySavings / totalMonthlyExpenses : 0;
   
   // Calculate goal progress
   const activeGoals = goals.filter(g => (g.current_amount || 0) < g.target_amount);
@@ -144,7 +147,7 @@ export function generateDashboardInsights(transactions, goals, recurringRules = 
     ? activeGoals.reduce((sum, g) => sum + ((g.current_amount || 0) / g.target_amount * 100), 0) / activeGoals.length
     : 100;
   
-  // Health score (0-100)
+  // ✅ Health score now includes recurring rules in calculation
   const healthScore = Math.round((
     Math.min(savingsRate * 5, 100) + // 20% savings = 100 points
     (netCashFlow > 0 ? 100 : 0) +
@@ -152,7 +155,7 @@ export function generateDashboardInsights(transactions, goals, recurringRules = 
     Math.min(monthlyRunway * 16.67, 100) // 6 months = 100 points
   ) / 4);
   
-  // Identify shortcomings
+  // Identify shortcomings (now using combined totals)
   const shortcomings = [];
   
   if (netCashFlow < 0) {
@@ -164,12 +167,12 @@ export function generateDashboardInsights(transactions, goals, recurringRules = 
     });
   }
   
-  if (savingsRate < 10 && summaryIncome > 0) {
+  if (savingsRate < 10 && totalMonthlyIncome > 0) {
     shortcomings.push({
       severity: 'warning',
       icon: '⚠️',
       message: `Low savings rate: ${savingsRate.toFixed(1)}% (target: 20%+)`,
-      action: `Save ${formatCurrency((summaryIncome * 0.20) - summarySavings)} more per month`
+      action: `Save ${formatCurrency((totalMonthlyIncome * 0.20) - summarySavings)} more per month`
     });
   }
   
@@ -178,7 +181,7 @@ export function generateDashboardInsights(transactions, goals, recurringRules = 
       severity: 'warning',
       icon: '💰',
       message: `Only ${monthlyRunway.toFixed(1)} months emergency fund`,
-      action: `Build to ${formatCurrency(summaryExpenses * 3)}`
+      action: `Build to ${formatCurrency(totalMonthlyExpenses * 3)}`
     });
   }
   
@@ -215,8 +218,8 @@ export function generateDashboardInsights(transactions, goals, recurringRules = 
   return {
     healthScore,
     keyMetrics: {
-      monthlyIncome: summaryIncome,
-      monthlyExpenses: summaryExpenses,
+      monthlyIncome: totalMonthlyIncome, // ✅ Now includes recurring
+      monthlyExpenses: totalMonthlyExpenses, // ✅ Now includes recurring
       monthlySavings: summarySavings,
       netCashFlow,
       savingsRate: savingsRate.toFixed(1),
