@@ -20,6 +20,7 @@ function AdminAnalytics() {
     conversions: []
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Authorization check - redirect if not admin
   useEffect(() => {
@@ -43,125 +44,187 @@ function AdminAnalytics() {
     }
   }, [user, isAdmin]);
 
+  // Helper: Query with timeout protection
+  const queryWithTimeout = async (queryFn, timeoutMs = 10000) => {
+    return Promise.race([
+      queryFn(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Query timeout')), timeoutMs)
+      )
+    ]);
+  };
+
   const loadAnalytics = async () => {
     try {
       setLoading(true);
+      setError(null);
 
       // Calculate date ranges
       const now = new Date();
       const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
       const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      // 1. Get total users count
-      const { count: totalUsers, error: usersError } = await supabase
-        .from('user_events')
-        .select('user_id', { count: 'exact', head: true })
-        .not('user_id', 'is', null);
+      const newStats = { ...stats };
+
+      // 1. Get total unique users (with error handling)
+      try {
+        const { data: userData } = await queryWithTimeout(() => 
+          supabase
+            .from('user_sessions')
+            .select('user_id')
+            .not('user_id', 'is', null)
+            .limit(1000)
+        );
+        newStats.totalUsers = userData ? new Set(userData.map(u => u.user_id)).size : 0;
+      } catch (err) {
+        console.warn('Failed to load total users:', err);
+      }
 
       // 2. Get active users (last 30 days)
-      const { data: activeUsersData, error: activeError } = await supabase
-        .from('user_sessions')
-        .select('user_id')
-        .gte('session_start', thirtyDaysAgo)
-        .not('user_id', 'is', null);
-
-      const activeUsers = activeUsersData ? new Set(activeUsersData.map(s => s.user_id)).size : 0;
+      try {
+        const { data: activeUsersData } = await queryWithTimeout(() =>
+          supabase
+            .from('user_sessions')
+            .select('user_id')
+            .gte('session_start', thirtyDaysAgo)
+            .not('user_id', 'is', null)
+            .limit(500)
+        );
+        newStats.activeUsers = activeUsersData ? new Set(activeUsersData.map(s => s.user_id)).size : 0;
+      } catch (err) {
+        console.warn('Failed to load active users:', err);
+      }
 
       // 3. Get new signups (last 7 days)
-      const { data: newSignupsData, error: signupsError } = await supabase
-        .from('conversion_events')
-        .select('*')
-        .eq('event_type', 'signup')
-        .gte('created_at', sevenDaysAgo);
+      try {
+        const { data: newSignupsData } = await queryWithTimeout(() =>
+          supabase
+            .from('conversion_events')
+            .select('id')
+            .eq('event_type', 'signup')
+            .gte('created_at', sevenDaysAgo)
+        );
+        newStats.newSignups = newSignupsData ? newSignupsData.length : 0;
+      } catch (err) {
+        console.warn('Failed to load new signups:', err);
+      }
 
-      const newSignups = newSignupsData ? newSignupsData.length : 0;
+      // 4. Get session stats (completed sessions only)
+      try {
+        const { data: sessions } = await queryWithTimeout(() =>
+          supabase
+            .from('user_sessions')
+            .select('session_start, session_end, device_type')
+            .not('session_end', 'is', null)
+            .gte('session_start', thirtyDaysAgo)
+            .limit(100)
+        );
 
-      // 4. Get session stats
-      const { data: sessions, error: sessionsError } = await supabase
-        .from('user_sessions')
-        .select('session_start, session_end, device_type')
-        .not('session_end', 'is', null)
-        .gte('session_start', thirtyDaysAgo)
-        .limit(100);
+        if (sessions && sessions.length > 0) {
+          // Calculate average session duration
+          const durations = sessions
+            .map(s => {
+              const start = new Date(s.session_start);
+              const end = new Date(s.session_end);
+              const duration = (end - start) / 1000;
+              return duration > 0 && duration < 86400 ? duration : 0; // Max 24 hours
+            })
+            .filter(d => d > 0);
 
-      let avgSessionDuration = 0;
-      let deviceStats = { desktop: 0, mobile: 0, tablet: 0 };
+          if (durations.length > 0) {
+            newStats.avgSessionDuration = Math.round(durations.reduce((a, b) => a + b, 0) / durations.length);
+          }
 
-      if (sessions && sessions.length > 0) {
-        // Calculate average session duration
-        const durations = sessions.map(s => {
-          const start = new Date(s.session_start);
-          const end = new Date(s.session_end);
-          return (end - start) / 1000; // seconds
-        });
-        avgSessionDuration = Math.round(durations.reduce((a, b) => a + b, 0) / durations.length);
-
-        // Count device types
-        sessions.forEach(s => {
-          const device = s.device_type?.toLowerCase() || 'desktop';
-          if (device === 'mobile') deviceStats.mobile++;
-          else if (device === 'tablet') deviceStats.tablet++;
-          else deviceStats.desktop++;
-        });
+          // Count device types
+          const deviceStats = { desktop: 0, mobile: 0, tablet: 0 };
+          sessions.forEach(s => {
+            const device = (s.device_type || 'desktop').toLowerCase();
+            if (device.includes('mobile')) deviceStats.mobile++;
+            else if (device.includes('tablet')) deviceStats.tablet++;
+            else deviceStats.desktop++;
+          });
+          newStats.deviceStats = deviceStats;
+          newStats.totalSessions = sessions.length;
+        }
+      } catch (err) {
+        console.warn('Failed to load session stats:', err);
       }
 
       // 5. Get feature usage stats
-      const { data: featureData, error: featureError } = await supabase
-        .from('feature_usage')
-        .select('feature_name')
-        .gte('created_at', thirtyDaysAgo);
+      try {
+        const { data: featureData } = await queryWithTimeout(() =>
+          supabase
+            .from('feature_usage')
+            .select('feature_name')
+            .gte('created_at', thirtyDaysAgo)
+            .limit(500)
+        );
 
-      let featureUsage = [];
-      if (featureData && featureData.length > 0) {
-        const featureCounts = featureData.reduce((acc, { feature_name }) => {
-          acc[feature_name] = (acc[feature_name] || 0) + 1;
-          return acc;
-        }, {});
+        if (featureData && featureData.length > 0) {
+          const featureCounts = featureData.reduce((acc, { feature_name }) => {
+            if (feature_name) {
+              acc[feature_name] = (acc[feature_name] || 0) + 1;
+            }
+            return acc;
+          }, {});
 
-        featureUsage = Object.entries(featureCounts)
-          .map(([name, count]) => ({ name, count }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 5);
+          newStats.featureUsage = Object.entries(featureCounts)
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5);
+        }
+      } catch (err) {
+        console.warn('Failed to load feature usage:', err);
       }
 
       // 6. Get recent sessions
-      const { data: recentSessions, error: recentError } = await supabase
-        .from('user_sessions')
-        .select('session_id, user_id, session_start, last_activity, pages_visited, device_type')
-        .order('last_activity', { ascending: false })
-        .limit(5);
+      try {
+        const { data: recentSessions } = await queryWithTimeout(() =>
+          supabase
+            .from('user_sessions')
+            .select('session_id, user_id, session_start, last_activity, pages_visited, device_type')
+            .order('last_activity', { ascending: false })
+            .limit(5)
+        );
+        newStats.recentSessions = recentSessions || [];
+      } catch (err) {
+        console.warn('Failed to load recent sessions:', err);
+      }
 
       // 7. Get recent errors
-      const { data: recentErrors, error: errorsError } = await supabase
-        .from('error_logs')
-        .select('error_type, error_message, page_path, created_at')
-        .order('created_at', { ascending: false })
-        .limit(5);
+      try {
+        const { data: recentErrors } = await queryWithTimeout(() =>
+          supabase
+            .from('error_logs')
+            .select('error_type, error_message, page_path, created_at')
+            .order('created_at', { ascending: false })
+            .limit(5)
+        );
+        newStats.recentErrors = recentErrors || [];
+      } catch (err) {
+        console.warn('Failed to load recent errors:', err);
+      }
 
       // 8. Get recent conversions
-      const { data: conversions, error: conversionsError } = await supabase
-        .from('conversion_events')
-        .select('event_type, source_page, created_at')
-        .order('created_at', { ascending: false })
-        .limit(5);
+      try {
+        const { data: conversions } = await queryWithTimeout(() =>
+          supabase
+            .from('conversion_events')
+            .select('event_type, source_page, created_at')
+            .order('created_at', { ascending: false })
+            .limit(5)
+        );
+        newStats.conversions = conversions || [];
+      } catch (err) {
+        console.warn('Failed to load conversions:', err);
+      }
 
-      // Update state
-      setStats({
-        totalUsers: totalUsers || 0,
-        activeUsers,
-        newSignups,
-        avgSessionDuration,
-        totalSessions: sessions?.length || 0,
-        featureUsage,
-        deviceStats,
-        recentSessions: recentSessions || [],
-        recentErrors: recentErrors || [],
-        conversions: conversions || []
-      });
+      // Update state with all collected data
+      setStats(newStats);
 
     } catch (error) {
       console.error('Analytics load error:', error);
-      alert('Failed to load analytics: ' + error.message);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -169,24 +232,30 @@ function AdminAnalytics() {
 
   // Format duration helper
   const formatDuration = (seconds) => {
+    if (!seconds || seconds < 1) return '0s';
     if (seconds < 60) return `${seconds}s`;
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}m ${secs}s`;
+    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
   };
 
   // Format time ago helper
   const timeAgo = (dateString) => {
-    const date = new Date(dateString);
-    const seconds = Math.floor((new Date() - date) / 1000);
-    
-    if (seconds < 60) return `${seconds}s ago`;
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
+    if (!dateString) return 'Unknown';
+    try {
+      const date = new Date(dateString);
+      const seconds = Math.floor((new Date() - date) / 1000);
+      
+      if (seconds < 60) return `${seconds}s ago`;
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      return `${days}d ago`;
+    } catch (err) {
+      return 'Unknown';
+    }
   };
 
   // Show access denied screen if not admin
@@ -227,7 +296,8 @@ function AdminAnalytics() {
     return (
       <div className="admin-analytics">
         <h1>📊 Analytics Dashboard</h1>
-        <p>Loading comprehensive analytics...</p>
+        <p>Loading analytics data...</p>
+        <p style={{ color: '#9ca3af', fontSize: '14px', marginTop: '10px' }}>This may take a few seconds...</p>
       </div>
     );
   }
@@ -250,10 +320,16 @@ function AdminAnalytics() {
             👨‍💼 ADMIN
           </span>
         </div>
-        <button onClick={loadAnalytics} className="refresh-btn">
+        <button onClick={loadAnalytics} className="refresh-btn" disabled={loading}>
           🔄 Refresh Data
         </button>
       </div>
+
+      {error && (
+        <div style={{ background: '#7f1d1d', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
+          <strong>⚠️ Error:</strong> {error}
+        </div>
+      )}
       
       {/* Main Stats Grid */}
       <div className="stats-grid">
@@ -336,7 +412,7 @@ function AdminAnalytics() {
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <strong>{session.session_id.substring(0, 8)}...</strong>
+                    <strong>{session.session_id ? session.session_id.substring(0, 8) + '...' : 'Unknown'}</strong>
                     <span style={{ marginLeft: '10px', color: '#9ca3af' }}>|
                       {session.device_type || 'Desktop'}
                     </span>
@@ -366,12 +442,12 @@ function AdminAnalytics() {
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <strong style={{ color: '#ef4444' }}>{error.error_type}</strong>
+                    <strong style={{ color: '#ef4444' }}>{error.error_type || 'Unknown Error'}</strong>
                     <div style={{ marginTop: '5px', color: '#9ca3af', fontSize: '14px' }}>
-                      {error.error_message}
+                      {error.error_message || 'No message'}
                     </div>
                     <div style={{ marginTop: '3px', color: '#6b7280', fontSize: '12px' }}>
-                      Page: {error.page_path}
+                      Page: {error.page_path || 'Unknown'}
                     </div>
                   </div>
                   <span style={{ color: '#9ca3af', fontSize: '14px' }}>{timeAgo(error.created_at)}</span>
@@ -394,9 +470,9 @@ function AdminAnalytics() {
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <strong style={{ color: '#22c55e' }}>{conversion.event_type}</strong>
+                    <strong style={{ color: '#22c55e' }}>{conversion.event_type || 'Unknown'}</strong>
                     <div style={{ marginTop: '5px', color: '#9ca3af', fontSize: '14px' }}>
-                      Source: {conversion.source_page}
+                      Source: {conversion.source_page || 'Unknown'}
                     </div>
                   </div>
                   <span style={{ color: '#9ca3af', fontSize: '14px' }}>{timeAgo(conversion.created_at)}</span>
