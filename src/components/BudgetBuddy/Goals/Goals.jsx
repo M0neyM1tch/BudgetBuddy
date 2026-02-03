@@ -3,6 +3,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { addGoal as addGoalDB, updateGoal as updateGoalDB, deleteGoal as deleteGoalDB } from '../../../utils/supabaseHelpers';
 import { addTransaction as addTransactionDB } from '../../../utils/supabaseHelpers';
 import { validateGoal } from '../../../lib/validation';
+import { trackFeature, trackError, getAmountRange } from '../../../utils/analytics';
 import './Goals.css';
 import GoalCard from './GoalCard';
 import HealthScore from './HealthScore';
@@ -48,7 +49,7 @@ function Goals({ goals, setGoals, transactions }) {
       try {
         const addedGoal = await addGoalDB(goalData, user.id);
 
-        // ✅ FIX: Create transaction for initial amount if > 0
+        // Create transaction for initial amount if > 0
         if (goalData.current_amount > 0) {
           try {
             await addTransactionDB(user.id, {
@@ -61,13 +62,30 @@ function Goals({ goals, setGoals, transactions }) {
             console.log('✅ Created initial transaction for goal');
           } catch (txError) {
             console.error('Error creating initial transaction:', txError);
+            trackError('goal_initial_transaction_error', txError.message, txError.stack, user.id);
           }
         }
 
         setGoals([...goals, addedGoal]);
+        
+        // Track goal creation
+        trackFeature(user.id, 'goals', 'create', {
+          target_amount_range: getAmountRange(goalData.target_amount),
+          category: goalData.category,
+          has_deadline: !!goalData.deadline,
+          initial_amount: goalData.current_amount > 0
+        });
+        
+        console.log('📊 Goal creation tracked');
         resetForm();
       } catch (error) {
         console.error('Error adding goal:', error);
+        
+        // Track error
+        trackError('goal_create_error', error.message, error.stack, user.id, {
+          goal_category: formData.category
+        });
+        
         alert('Failed to add goal: ' + error.message);
       }
     } else {
@@ -89,16 +107,18 @@ function Goals({ goals, setGoals, transactions }) {
     setShowForm(false);
   }
 
-  // === CONTRIBUTE TO GOAL (Fix +$ buttons) ===
+  // === CONTRIBUTE TO GOAL ===
   async function handleContribute(goalId, amount) {
     const goal = goals.find(g => g.id === goalId);
     if (!goal) return;
 
     const newCurrentAmount = (goal.current_amount || 0) + amount;
+    const wasComplete = (goal.current_amount || 0) >= goal.target_amount;
+    const isNowComplete = newCurrentAmount >= goal.target_amount;
 
     if (user) {
       try {
-        // ✅ FIX: Create transaction for contribution
+        // Create transaction for contribution
         await addTransactionDB(user.id, {
           date: new Date().toISOString().split('T')[0],
           description: `Contribution to ${goal.name}`,
@@ -109,7 +129,7 @@ function Goals({ goals, setGoals, transactions }) {
 
         console.log(`✅ Added $${amount} contribution to ${goal.name}`);
 
-        // ✅ FIX: Only update current_amount, not entire object
+        // Update goal
         const updated = await updateGoalDB(goalId, {
           current_amount: newCurrentAmount
         }, user.id);
@@ -117,8 +137,31 @@ function Goals({ goals, setGoals, transactions }) {
         if (updated) {
           setGoals(goals.map(g => g.id === goalId ? updated : g));
         }
+
+        // Track contribution
+        trackFeature(user.id, 'goals', 'contribute', {
+          amount_range: getAmountRange(amount),
+          goal_category: goal.category,
+          progress_percent: Math.round((newCurrentAmount / goal.target_amount) * 100)
+        });
+
+        // Track completion if goal just became complete
+        if (!wasComplete && isNowComplete) {
+          trackFeature(user.id, 'goals', 'complete', {
+            goal_category: goal.category,
+            target_amount_range: getAmountRange(goal.target_amount),
+            had_deadline: !!goal.deadline
+          });
+          console.log('🎉 Goal completion tracked!');
+        }
+
       } catch (error) {
         console.error('Error contributing to goal:', error);
+        
+        trackError('goal_contribute_error', error.message, error.stack, user.id, {
+          goal_id: goalId
+        });
+        
         alert('Failed to contribute: ' + error.message);
       }
     } else {
@@ -130,12 +173,29 @@ function Goals({ goals, setGoals, transactions }) {
   async function handleDeleteGoal(goalId) {
     if (!window.confirm('Are you sure you want to delete this goal?')) return;
 
+    const goal = goals.find(g => g.id === goalId);
+    const wasCompleted = goal ? (goal.current_amount || 0) >= goal.target_amount : false;
+
     if (user) {
       try {
         await deleteGoalDB(goalId, user.id);
         setGoals(goals.filter(g => g.id !== goalId));
+        
+        // Track deletion
+        trackFeature(user.id, 'goals', 'delete', {
+          was_completed: wasCompleted,
+          goal_category: goal?.category,
+          progress_percent: goal ? Math.round(((goal.current_amount || 0) / goal.target_amount) * 100) : 0
+        });
+        
+        console.log('📊 Goal deletion tracked');
       } catch (error) {
         console.error('Error deleting goal:', error);
+        
+        trackError('goal_delete_error', error.message, error.stack, user.id, {
+          goal_id: goalId
+        });
+        
         alert('Failed to delete goal: ' + error.message);
       }
     } else {
