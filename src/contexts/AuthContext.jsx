@@ -12,6 +12,17 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Get admin emails from environment variable
+  // Supports multiple emails separated by commas
+  const getAdminEmails = () => {
+    const envAdmins = import.meta.env.VITE_ADMIN_EMAIL;
+    if (envAdmins) {
+      return envAdmins.split(',').map(email => email.trim());
+    }
+    // Fallback for backward compatibility (should set VITE_ADMIN_EMAIL in .env)
+    return [];
+  };
+
   useEffect(() => {
     console.log('🚀 Auth initialization started');
     
@@ -20,8 +31,8 @@ export function AuthProvider({ children }) {
       console.log('✅ Session loaded:', session?.user?.email || 'No user');
       setUser(session?.user ?? null);
       
-      // Simple hardcoded admin check (temporary)
-      const adminEmails = ['zzmitchellzz@outlook.com']; // ADD YOUR EMAIL
+      // Admin check using environment variable
+      const adminEmails = getAdminEmails();
       if (session?.user?.email && adminEmails.includes(session.user.email)) {
         setIsAdmin(true);
         console.log('✅ User is admin');
@@ -39,7 +50,7 @@ export function AuthProvider({ children }) {
       setUser(session?.user ?? null);
       
       // Check admin status
-      const adminEmails = ['zzmitchellzz@outlook.com'];
+      const adminEmails = getAdminEmails();
       if (session?.user?.email && adminEmails.includes(session.user.email)) {
         setIsAdmin(true);
       } else {
