@@ -1,24 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { initializeSession, trackEvent, trackConversion, getAmountRange } from '../../utils/analytics';
 import './LandingPage.css';
 
 function LandingPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const hasInitializedSession = useRef(false);
+  const calculatorInteractionCount = useRef(0);
 
   // If user is logged in, redirect to dashboard
-  React.useEffect(() => {
+  useEffect(() => {
     if (user) {
       navigate('/dashboard');
     }
   }, [user, navigate]);
+
+  // Initialize analytics session on mount
+  useEffect(() => {
+    if (!hasInitializedSession.current) {
+      initializeSession(null); // Anonymous session
+      trackEvent(null, 'page_view', {
+        category: 'landing',
+        action: 'view',
+        label: 'landing_page'
+      });
+      hasInitializedSession.current = true;
+    }
+  }, []);
 
   // Embedded Freedom Calculator State
   const [monthlyIncome, setMonthlyIncome] = useState(5000);
   const [monthlySavings, setMonthlySavings] = useState(1000);
   const [currentSavings, setCurrentSavings] = useState(10000);
   const [monthlyExpenses, setMonthlyExpenses] = useState(3500);
+
+  // Track calculator interactions (debounced)
+  const trackCalculatorUse = (field) => {
+    calculatorInteractionCount.current += 1;
+    
+    // Track every 5th interaction to avoid spam
+    if (calculatorInteractionCount.current % 5 === 0) {
+      trackEvent(null, 'calculator_use', {
+        category: 'landing_calculator',
+        action: 'slider_change',
+        label: field,
+        metadata: { interaction_count: calculatorInteractionCount.current }
+      });
+    }
+  };
 
   // Calculate Freedom Number
   const yearlyExpenses = monthlyExpenses * 12;
@@ -33,28 +64,17 @@ function LandingPage() {
   const discretionaryIncome = monthlyIncome - monthlyExpenses;
 
   // LOSS CALCULATIONS based on North American statistics
-  // Source: C+R Research 2024, Statistics Canada 2024
-  
-  // 1. Forgotten Subscriptions: Average 5% of income or $17-23/month per subscription
-  // Canadians have avg 5.4 subscriptions, 66% forget at least one = ~1.8 forgotten subs
-  // Average $273/month total on subscriptions (C+R Research)
-  const avgSubscriptionWaste = Math.min(monthlyIncome * 0.05, 273); // Cap at research average
-  const forgottenSubscriptions = Math.round(avgSubscriptionWaste * 0.66); // 66% have forgotten ones
+  const avgSubscriptionWaste = Math.min(monthlyIncome * 0.05, 273);
+  const forgottenSubscriptions = Math.round(avgSubscriptionWaste * 0.66);
 
-  // 2. Impulse Purchases: 5-8% of discretionary income
-  // Studies show $151-314/month average (2023-2024 data)
-  // Floor set to $150 (lower end of research)
-  const impulsePercentage = 0.065; // 6.5% of discretionary income
+  const impulsePercentage = 0.065;
   const impulsePurchases = Math.round(
-    Math.max(discretionaryIncome * impulsePercentage, 150) // Floor of $150
+    Math.max(discretionaryIncome * impulsePercentage, 150)
   );
 
-  // 3. Budget Overspending: 10-15% overspend in flexible categories
-  // Average household overspends 3-5% of total income
-  const overspendingPercentage = 0.04; // 4% of income
+  const overspendingPercentage = 0.04;
   const budgetOverspending = Math.round(monthlyIncome * overspendingPercentage);
 
-  // Total monthly loss
   const totalMonthlyLoss = forgottenSubscriptions + impulsePurchases + budgetOverspending;
   const totalYearlyLoss = totalMonthlyLoss * 12;
 
@@ -65,7 +85,6 @@ function LandingPage() {
     const monthlyRate = annualRate / 12;
     const months = years * 12;
     
-    // Future value of series formula
     const futureValue = monthlyContribution * 
       ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate) * 
       (1 + monthlyRate);
@@ -77,6 +96,23 @@ function LandingPage() {
   const potentialIn10Years = calculateCompoundInterest(10);
   const potentialIn20Years = calculateCompoundInterest(20);
 
+  // CTA Click Handlers with Tracking
+  const handleCTAClick = (source) => {
+    trackEvent(null, 'cta_click', {
+      category: 'conversion',
+      action: 'click',
+      label: source
+    });
+
+    trackConversion('signup_intent', '/landing', {
+      cta_source: source,
+      years_to_freedom: yearsToFreedom.toFixed(1),
+      income_range: getAmountRange(monthlyIncome)
+    });
+
+    navigate('/login');
+  };
+
   return (
     <div className="landing-page">
       {/* Navigation */}
@@ -87,7 +123,10 @@ function LandingPage() {
             <h1>BudgetBuddy</h1>
             <span className="beta-badge">BETA</span>
           </div>
-          <button className="cta-btn-nav" onClick={() => navigate('/login')}>
+          <button 
+            className="cta-btn-nav" 
+            onClick={() => handleCTAClick('nav_button')}
+          >
             Log In / Sign Up
           </button>
         </div>
@@ -128,7 +167,10 @@ function LandingPage() {
                     max="20000"
                     step="500"
                     value={monthlyIncome}
-                    onChange={(e) => setMonthlyIncome(Number(e.target.value))}
+                    onChange={(e) => {
+                      setMonthlyIncome(Number(e.target.value));
+                      trackCalculatorUse('monthly_income');
+                    }}
                     className="slider"
                   />
                 </div>
@@ -145,7 +187,10 @@ function LandingPage() {
                     max="15000"
                     step="250"
                     value={monthlyExpenses}
-                    onChange={(e) => setMonthlyExpenses(Number(e.target.value))}
+                    onChange={(e) => {
+                      setMonthlyExpenses(Number(e.target.value));
+                      trackCalculatorUse('monthly_expenses');
+                    }}
                     className="slider"
                   />
                 </div>
@@ -162,7 +207,10 @@ function LandingPage() {
                     max="10000"
                     step="100"
                     value={monthlySavings}
-                    onChange={(e) => setMonthlySavings(Number(e.target.value))}
+                    onChange={(e) => {
+                      setMonthlySavings(Number(e.target.value));
+                      trackCalculatorUse('monthly_savings');
+                    }}
                     className="slider"
                   />
                 </div>
@@ -179,7 +227,10 @@ function LandingPage() {
                     max="500000"
                     step="5000"
                     value={currentSavings}
-                    onChange={(e) => setCurrentSavings(Number(e.target.value))}
+                    onChange={(e) => {
+                      setCurrentSavings(Number(e.target.value));
+                      trackCalculatorUse('current_savings');
+                    }}
                     className="slider"
                   />
                 </div>
@@ -213,7 +264,10 @@ function LandingPage() {
               </div>
 
               <div className="calculator-cta">
-                <button className="calc-cta-btn" onClick={() => navigate('/login')}>
+                <button 
+                  className="calc-cta-btn" 
+                  onClick={() => handleCTAClick('calculator_cta')}
+                >
                   Start Tracking Free
                 </button>
               </div>
@@ -222,7 +276,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Loss Aversion Section - Dynamic Calculations */}
+      {/* Loss Aversion Section */}
       <section className="loss-aversion-section">
         <div className="loss-container">
           <h2 className="loss-title">Based on Your Income, Here's What You're Likely Losing</h2>
@@ -280,13 +334,16 @@ function LandingPage() {
             </small>
           </p>
 
-          <button className="cta-btn-loss" onClick={() => navigate('/login')}>
+          <button 
+            className="cta-btn-loss" 
+            onClick={() => handleCTAClick('loss_section_cta')}
+          >
             Stop the Bleeding — Start Free
           </button>
         </div>
       </section>
 
-      {/* Features Section - Benefit-Driven */}
+      {/* Features Section */}
       <section className="features-section">
         <div className="features-container">
           <h2 className="section-title">Stop Stressing. Start Living.</h2>
@@ -449,7 +506,10 @@ function LandingPage() {
         <div className="cta-container">
           <h2>Every Day You Wait Costs You Money</h2>
           <p>Start tracking today. See results this month. Build wealth for life.</p>
-          <button className="cta-btn-large" onClick={() => navigate('/login')}>
+          <button 
+            className="cta-btn-large" 
+            onClick={() => handleCTAClick('final_cta')}
+          >
             Take Control Now
           </button>
         </div>
