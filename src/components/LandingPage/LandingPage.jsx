@@ -43,9 +43,10 @@ function LandingPage() {
 
   // 2. Impulse Purchases: 5-8% of discretionary income
   // Studies show $151-314/month average (2023-2024 data)
+  // Floor set to $150 (lower end of research)
   const impulsePercentage = 0.065; // 6.5% of discretionary income
   const impulsePurchases = Math.round(
-    Math.min(discretionaryIncome * impulsePercentage, 314)
+    Math.max(discretionaryIncome * impulsePercentage, 150) // Floor of $150
   );
 
   // 3. Budget Overspending: 10-15% overspend in flexible categories
@@ -221,7 +222,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Loss Aversion Section - NOW DYNAMIC */}
+      {/* Loss Aversion Section - Dynamic Calculations */}
       <section className="loss-aversion-section">
         <div className="loss-container">
           <h2 className="loss-title">Based on Your Income, Here's What You're Likely Losing</h2>
@@ -282,24 +283,6 @@ function LandingPage() {
           <button className="cta-btn-loss" onClick={() => navigate('/login')}>
             Stop the Bleeding — Start Free
           </button>
-        </div>
-      </section>
-
-      {/* Social Proof Section */}
-      <section className="social-proof-section">
-        <div className="social-proof-container">
-          <div className="proof-stat">
-            <div className="proof-number">10,000+</div>
-            <div className="proof-label">People Building Wealth</div>
-          </div>
-          <div className="proof-stat">
-            <div className="proof-number">$2.3M+</div>
-            <div className="proof-label">Tracked in Savings</div>
-          </div>
-          <div className="proof-stat">
-            <div className="proof-number">4.8★</div>
-            <div className="proof-label">Average Rating</div>
-          </div>
         </div>
       </section>
 
@@ -467,9 +450,8 @@ function LandingPage() {
           <h2>Every Day You Wait Costs You Money</h2>
           <p>Start tracking today. See results this month. Build wealth for life.</p>
           <button className="cta-btn-large" onClick={() => navigate('/login')}>
-            Take Control Now — Free Forever
+            Take Control Now
           </button>
-          <p className="cta-subtext">Join 10,000+ people building their financial freedom</p>
         </div>
       </section>
 
