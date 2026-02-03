@@ -29,6 +29,53 @@ function LandingPage() {
 
   const savingsRate = monthlyIncome > 0 ? (monthlySavings / monthlyIncome) * 100 : 0;
 
+  // Calculate discretionary income (income - expenses)
+  const discretionaryIncome = monthlyIncome - monthlyExpenses;
+
+  // LOSS CALCULATIONS based on North American statistics
+  // Source: C+R Research 2024, Statistics Canada 2024
+  
+  // 1. Forgotten Subscriptions: Average 5% of income or $17-23/month per subscription
+  // Canadians have avg 5.4 subscriptions, 66% forget at least one = ~1.8 forgotten subs
+  // Average $273/month total on subscriptions (C+R Research)
+  const avgSubscriptionWaste = Math.min(monthlyIncome * 0.05, 273); // Cap at research average
+  const forgottenSubscriptions = Math.round(avgSubscriptionWaste * 0.66); // 66% have forgotten ones
+
+  // 2. Impulse Purchases: 5-8% of discretionary income
+  // Studies show $151-314/month average (2023-2024 data)
+  const impulsePercentage = 0.065; // 6.5% of discretionary income
+  const impulsePurchases = Math.round(
+    Math.min(discretionaryIncome * impulsePercentage, 314)
+  );
+
+  // 3. Budget Overspending: 10-15% overspend in flexible categories
+  // Average household overspends 3-5% of total income
+  const overspendingPercentage = 0.04; // 4% of income
+  const budgetOverspending = Math.round(monthlyIncome * overspendingPercentage);
+
+  // Total monthly loss
+  const totalMonthlyLoss = forgottenSubscriptions + impulsePurchases + budgetOverspending;
+  const totalYearlyLoss = totalMonthlyLoss * 12;
+
+  // Compound interest calculation (8% annual return)
+  const calculateCompoundInterest = (years) => {
+    const monthlyContribution = totalMonthlyLoss;
+    const annualRate = 0.08;
+    const monthlyRate = annualRate / 12;
+    const months = years * 12;
+    
+    // Future value of series formula
+    const futureValue = monthlyContribution * 
+      ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate) * 
+      (1 + monthlyRate);
+    
+    return Math.round(futureValue);
+  };
+
+  const potentialIn5Years = calculateCompoundInterest(5);
+  const potentialIn10Years = calculateCompoundInterest(10);
+  const potentialIn20Years = calculateCompoundInterest(20);
+
   return (
     <div className="landing-page">
       {/* Navigation */}
@@ -174,56 +221,63 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Loss Aversion Section */}
+      {/* Loss Aversion Section - NOW DYNAMIC */}
       <section className="loss-aversion-section">
         <div className="loss-container">
-          <h2 className="loss-title">How Much Are You Losing Every Month?</h2>
+          <h2 className="loss-title">Based on Your Income, Here's What You're Likely Losing</h2>
           <p className="loss-subtitle">
-            Without tracking your finances, you're bleeding money on autopilot. Here's what the average person loses:
+            Without tracking, North Americans waste money on autopilot. Here's your personalized estimate based on Canadian and U.S. spending research:
           </p>
           
           <div className="loss-grid">
             <div className="loss-card">
-              <div className="loss-amount">$247</div>
-              <div className="loss-label">Lost to Forgotten Subscriptions</div>
-              <p className="loss-desc">Gym memberships, streaming services, apps you forgot you had</p>
+              <div className="loss-amount">${forgottenSubscriptions}</div>
+              <div className="loss-label">Forgotten Subscriptions</div>
+              <p className="loss-desc">66% of Canadians pay for subscriptions they forgot about (avg 5% of income)</p>
             </div>
             
             <div className="loss-card">
-              <div className="loss-amount">$412</div>
-              <div className="loss-label">Wasted on Impulse Purchases</div>
-              <p className="loss-desc">Small purchases that add up: coffee, takeout, online shopping</p>
+              <div className="loss-amount">${impulsePurchases}</div>
+              <div className="loss-label">Impulse Purchases</div>
+              <p className="loss-desc">Average 6.5% of discretionary income on unplanned purchases (coffee, takeout, online shopping)</p>
             </div>
             
             <div className="loss-card">
-              <div className="loss-amount">$183</div>
-              <div className="loss-label">Overspending Your Budget</div>
-              <p className="loss-desc">Categories you didn't track — entertainment, dining, shopping</p>
+              <div className="loss-amount">${budgetOverspending}</div>
+              <div className="loss-label">Budget Overspending</div>
+              <p className="loss-desc">Most households overspend by ~4% in flexible categories they don't track</p>
             </div>
           </div>
 
           <div className="loss-total">
-            <strong>Total Monthly Loss: $842</strong>
-            <span>That's <strong>$10,104 per year</strong> you'll never get back.</span>
+            <strong>Your Estimated Monthly Loss: ${totalMonthlyLoss.toLocaleString()}</strong>
+            <span>That's <strong>${totalYearlyLoss.toLocaleString()} per year</strong> you could be investing instead.</span>
           </div>
 
           <div className="loss-impact">
-            <p>💡 <strong>If you invested that $10,104 yearly at 8% returns:</strong></p>
+            <p>💡 <strong>If you invested that ${totalMonthlyLoss.toLocaleString()}/month at 8% returns:</strong></p>
             <div className="impact-stats">
               <div className="impact-stat">
-                <span className="impact-number">$54,891</span>
+                <span className="impact-number">${potentialIn5Years.toLocaleString()}</span>
                 <span className="impact-label">After 5 years</span>
               </div>
               <div className="impact-stat">
-                <span className="impact-number">$157,835</span>
+                <span className="impact-number">${potentialIn10Years.toLocaleString()}</span>
                 <span className="impact-label">After 10 years</span>
               </div>
               <div className="impact-stat">
-                <span className="impact-number">$493,139</span>
+                <span className="impact-number">${potentialIn20Years.toLocaleString()}</span>
                 <span className="impact-label">After 20 years</span>
               </div>
             </div>
           </div>
+
+          <p className="loss-disclaimer">
+            <small>
+              *Estimates based on 2024 Canadian and U.S. spending research (C+R Research, Statistics Canada, Capital One Shopping). 
+              Individual results vary. These calculations use your income and discretionary spending to estimate typical waste patterns.
+            </small>
+          </p>
 
           <button className="cta-btn-loss" onClick={() => navigate('/login')}>
             Stop the Bleeding — Start Free
