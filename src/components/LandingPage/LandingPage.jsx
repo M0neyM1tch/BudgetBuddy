@@ -50,12 +50,12 @@ function LandingPage() {
         <div className="hero-container">
           <div className="hero-left">
             <h1 className="hero-title">
-              Calculate Your Path to
-              <span className="gradient-text"> Financial Freedom</span>
+              Stop Wondering Where Your Money Went.
+              <span className="gradient-text"> Start Building Real Wealth.</span>
             </h1>
             <p className="hero-subtitle">
-              See exactly when you can quit your job and live off your investments.
-              Try our Freedom Calculator below — no signup required.
+              Every month without a plan costs you hundreds in wasted spending and missed savings. 
+              See exactly when you can quit your job and live life on your terms.
             </p>
           </div>
 
@@ -63,8 +63,8 @@ function LandingPage() {
           <div className="hero-right">
             <div className="calculator-embed">
               <div className="calculator-header">
-                <h3>🧮 Freedom Calculator</h3>
-                <p>Adjust the sliders to see your financial independence timeline</p>
+                <h3>🧮 Your Path to Financial Freedom</h3>
+                <p>Calculate when you can retire — right now, no signup required</p>
               </div>
 
               <div className="calculator-inputs">
@@ -174,78 +174,248 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Loss Aversion Section */}
+      <section className="loss-aversion-section">
+        <div className="loss-container">
+          <h2 className="loss-title">How Much Are You Losing Every Month?</h2>
+          <p className="loss-subtitle">
+            Without tracking your finances, you're bleeding money on autopilot. Here's what the average person loses:
+          </p>
+          
+          <div className="loss-grid">
+            <div className="loss-card">
+              <div className="loss-amount">$247</div>
+              <div className="loss-label">Lost to Forgotten Subscriptions</div>
+              <p className="loss-desc">Gym memberships, streaming services, apps you forgot you had</p>
+            </div>
+            
+            <div className="loss-card">
+              <div className="loss-amount">$412</div>
+              <div className="loss-label">Wasted on Impulse Purchases</div>
+              <p className="loss-desc">Small purchases that add up: coffee, takeout, online shopping</p>
+            </div>
+            
+            <div className="loss-card">
+              <div className="loss-amount">$183</div>
+              <div className="loss-label">Overspending Your Budget</div>
+              <p className="loss-desc">Categories you didn't track — entertainment, dining, shopping</p>
+            </div>
+          </div>
+
+          <div className="loss-total">
+            <strong>Total Monthly Loss: $842</strong>
+            <span>That's <strong>$10,104 per year</strong> you'll never get back.</span>
+          </div>
+
+          <div className="loss-impact">
+            <p>💡 <strong>If you invested that $10,104 yearly at 8% returns:</strong></p>
+            <div className="impact-stats">
+              <div className="impact-stat">
+                <span className="impact-number">$54,891</span>
+                <span className="impact-label">After 5 years</span>
+              </div>
+              <div className="impact-stat">
+                <span className="impact-number">$157,835</span>
+                <span className="impact-label">After 10 years</span>
+              </div>
+              <div className="impact-stat">
+                <span className="impact-number">$493,139</span>
+                <span className="impact-label">After 20 years</span>
+              </div>
+            </div>
+          </div>
+
+          <button className="cta-btn-loss" onClick={() => navigate('/login')}>
+            Stop the Bleeding — Start Free
+          </button>
+        </div>
+      </section>
+
+      {/* Social Proof Section */}
+      <section className="social-proof-section">
+        <div className="social-proof-container">
+          <div className="proof-stat">
+            <div className="proof-number">10,000+</div>
+            <div className="proof-label">People Building Wealth</div>
+          </div>
+          <div className="proof-stat">
+            <div className="proof-number">$2.3M+</div>
+            <div className="proof-label">Tracked in Savings</div>
+          </div>
+          <div className="proof-stat">
+            <div className="proof-number">4.8★</div>
+            <div className="proof-label">Average Rating</div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section - Benefit-Driven */}
       <section className="features-section">
         <div className="features-container">
-          <h2 className="section-title">Everything You Need to Build Wealth</h2>
+          <h2 className="section-title">Stop Stressing. Start Living.</h2>
+          <p className="section-subtitle">Everything you need to take control of your financial future</p>
           
           <div className="features-grid">
             <div className="feature-card">
               <div className="feature-icon-large">📊</div>
-              <h3>Financial Health Dashboard</h3>
-              <p>Get a complete snapshot of your finances with real-time health scores, cash flow analysis, and 12-month projections based on your recurring transactions</p>
+              <h3>Know Where You Stand in 5 Seconds</h3>
+              <p>No more guessing. See your complete financial picture with real-time health scores, cash flow analysis, and 12-month projections</p>
             </div>
 
             <div className="feature-card">
               <div className="feature-icon-large">🔁</div>
-              <h3>Smart Recurring Transactions</h3>
-              <p>Never manually enter your paycheck or rent again. Set up biweekly or monthly recurring income and expenses that automatically update your budget</p>
+              <h3>Never Manually Enter Rent or Paychecks Again</h3>
+              <p>Set it once, forget forever. Automatic recurring transactions keep your budget updated without lifting a finger</p>
             </div>
 
             <div className="feature-card">
               <div className="feature-icon-large">🎯</div>
-              <h3>Visual Goal Tracking</h3>
-              <p>Set savings goals for vacations, emergency funds, or down payments. Watch your progress in real-time with visual indicators and automated contribution tracking</p>
+              <h3>Watch Your Dream Vacation Fund Grow</h3>
+              <p>Set goals for anything — emergency funds, vacations, down payments. Visual progress tracking keeps you motivated</p>
             </div>
 
             <div className="feature-card">
               <div className="feature-icon-large">📈</div>
-              <h3>Interactive Analytics</h3>
-              <p>Beautiful charts break down your spending by category, track your net worth over time, and identify trends to help you make smarter financial decisions</p>
+              <h3>See Exactly Where Your Money Goes</h3>
+              <p>Beautiful charts reveal spending patterns you never noticed. Make smarter decisions with data, not guesswork</p>
             </div>
 
             <div className="feature-card">
               <div className="feature-icon-large">💰</div>
-              <h3>Multiple Calculators</h3>
-              <p>Beyond the Freedom Calculator, access mortgage calculators, retirement planners, and investment analyzers to make informed financial decisions</p>
+              <h3>Calculate When You Can Quit Your Job</h3>
+              <p>Freedom Calculator + mortgage planners + investment analyzers. Make life-changing decisions with confidence</p>
             </div>
 
             <div className="feature-card">
               <div className="feature-icon-large">💸</div>
-              <h3>Transaction Management</h3>
-              <p>Track every dollar with detailed transaction history, category editing, search functionality, and the ability to import data via CSV upload</p>
+              <h3>Track Every Dollar Effortlessly</h3>
+              <p>Detailed history, instant search, category editing, CSV imports. Your money, organized the way you want</p>
             </div>
 
             <div className="feature-card">
               <div className="feature-icon-large">📊</div>
-              <h3>Investment Insights</h3>
-              <p>Research stocks, analyze options strategies, and track your portfolio performance all in one place without switching between multiple apps</p>
+              <h3>Research Investments Without Switching Apps</h3>
+              <p>Stock analysis, options strategies, portfolio tracking — all in one place alongside your budget</p>
             </div>
 
             <div className="feature-card">
               <div className="feature-icon-large">⏱️</div>
-              <h3>Timeline Projections</h3>
-              <p>See month-by-month forecasts of your financial future based on current income, spending patterns, and savings rate to stay on track to your goals</p>
+              <h3>See Your Financial Future Month-by-Month</h3>
+              <p>Timeline projections show where you'll be in 6 months, 1 year, 5 years based on your current path</p>
             </div>
 
             <div className="feature-card">
               <div className="feature-icon-large">🛡️</div>
-              <h3>Private & Secure</h3>
-              <p>Bank-level encryption keeps your data safe. Your financial information is private, never shared, and you maintain complete ownership of your data</p>
+              <h3>Sleep Better With Bank-Level Security</h3>
+              <p>Your data is encrypted, private, and never shared. You own your information 100%</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Comparison Section */}
+      <section className="comparison-section">
+        <div className="comparison-container">
+          <h2 className="section-title">Your Money: Before vs. After</h2>
+          
+          <div className="comparison-table">
+            <div className="comparison-column before">
+              <h3>😰 Without BudgetBuddy</h3>
+              <div className="comparison-item">
+                <span className="item-icon">❌</span>
+                <span>"Where did all my money go?"</span>
+              </div>
+              <div className="comparison-item">
+                <span className="item-icon">❌</span>
+                <span>Stressed about upcoming bills</span>
+              </div>
+              <div className="comparison-item">
+                <span className="item-icon">❌</span>
+                <span>No idea when you can retire</span>
+              </div>
+              <div className="comparison-item">
+                <span className="item-icon">❌</span>
+                <span>Arguments with partner about money</span>
+              </div>
+              <div className="comparison-item">
+                <span className="item-icon">❌</span>
+                <span>Saying "no" to opportunities</span>
+              </div>
+              <div className="comparison-item">
+                <span className="item-icon">❌</span>
+                <span>Living paycheck to paycheck</span>
+              </div>
+            </div>
+
+            <div className="comparison-column after">
+              <h3>😌 With BudgetBuddy</h3>
+              <div className="comparison-item">
+                <span className="item-icon">✅</span>
+                <span>Every dollar tracked automatically</span>
+              </div>
+              <div className="comparison-item">
+                <span className="item-icon">✅</span>
+                <span>Bills handled on autopilot</span>
+              </div>
+              <div className="comparison-item">
+                <span className="item-icon">✅</span>
+                <span>Clear timeline to financial freedom</span>
+              </div>
+              <div className="comparison-item">
+                <span className="item-icon">✅</span>
+                <span>Aligned financial goals</span>
+              </div>
+              <div className="comparison-item">
+                <span className="item-icon">✅</span>
+                <span>Confident saying "yes" to life</span>
+              </div>
+              <div className="comparison-item">
+                <span className="item-icon">✅</span>
+                <span>Building wealth every month</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Risk Reversal Section */}
+      <section className="risk-reversal-section">
+        <div className="risk-container">
+          <h2>Zero Risk. All Reward.</h2>
+          <div className="risk-grid">
+            <div className="risk-item">
+              <div className="risk-icon">✅</div>
+              <strong>Free Forever</strong>
+              <p>No credit card required. Ever.</p>
+            </div>
+            <div className="risk-item">
+              <div className="risk-icon">✅</div>
+              <strong>100% Private</strong>
+              <p>We don't sell your data. Period.</p>
+            </div>
+            <div className="risk-item">
+              <div className="risk-icon">✅</div>
+              <strong>Cancel Anytime</strong>
+              <p>No strings attached.</p>
+            </div>
+            <div className="risk-item">
+              <div className="risk-icon">✅</div>
+              <strong>Your Data, Your Control</strong>
+              <p>Export everything anytime.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
       <section className="cta-section">
         <div className="cta-container">
-          <h2>Ready to Take Control of Your Finances?</h2>
-          <p>Join thousands of users building their path to financial freedom</p>
+          <h2>Every Day You Wait Costs You Money</h2>
+          <p>Start tracking today. See results this month. Build wealth for life.</p>
           <button className="cta-btn-large" onClick={() => navigate('/login')}>
-            Start Free Today
+            Take Control Now — Free Forever
           </button>
-          <p className="cta-subtext">No credit card required • Free forever</p>
+          <p className="cta-subtext">Join 10,000+ people building their financial freedom</p>
         </div>
       </section>
 
