@@ -750,18 +750,18 @@
     padding: 0 1rem;
   }
 
+  /* Hide app name and beta badge earlier to prevent button overflow */
   .nav-brand h1 {
-    font-size: 18px;
+    display: none;
+  }
+
+  .beta-badge {
+    display: none;
   }
 
   .nav-logo {
     width: 40px;
     height: 40px;
-  }
-
-  .beta-badge {
-    font-size: 10px;
-    padding: 3px 8px;
   }
 
   .cta-btn-nav {
@@ -803,10 +803,6 @@
 }
 
 @media (max-width: 480px) {
-  .nav-brand h1 {
-    display: none;
-  }
-
   .cta-btn-nav {
     font-size: 12px;
     padding: 8px 12px;
