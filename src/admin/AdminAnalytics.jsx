@@ -8,11 +8,16 @@ function AdminAnalytics() {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    newSignups: 0,
+    avgSessionDuration: 0,
     totalSessions: 0,
-    conversionRate: 0,
-    popularFeature: '',
-    todayViews: 0,
-    signupClicks: 0
+    featureUsage: [],
+    deviceStats: { desktop: 0, mobile: 0, tablet: 0 },
+    recentSessions: [],
+    recentErrors: [],
+    conversions: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -42,68 +47,146 @@ function AdminAnalytics() {
     try {
       setLoading(true);
 
-      // Get all analytics data
-      const { data: allEvents, error } = await supabase
-        .from('public_demo_analytics')
+      // Calculate date ranges
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      // 1. Get total users count
+      const { count: totalUsers, error: usersError } = await supabase
+        .from('user_events')
+        .select('user_id', { count: 'exact', head: true })
+        .not('user_id', 'is', null);
+
+      // 2. Get active users (last 30 days)
+      const { data: activeUsersData, error: activeError } = await supabase
+        .from('user_sessions')
+        .select('user_id')
+        .gte('session_start', thirtyDaysAgo)
+        .not('user_id', 'is', null);
+
+      const activeUsers = activeUsersData ? new Set(activeUsersData.map(s => s.user_id)).size : 0;
+
+      // 3. Get new signups (last 7 days)
+      const { data: newSignupsData, error: signupsError } = await supabase
+        .from('conversion_events')
         .select('*')
-        .order('created_at', { ascending: false });
+        .eq('event_type', 'signup')
+        .gte('created_at', sevenDaysAgo);
 
-      if (error) throw error;
+      const newSignups = newSignupsData ? newSignupsData.length : 0;
 
-      if (!allEvents || allEvents.length === 0) {
-        setStats({
-          totalSessions: 0,
-          conversionRate: 0,
-          popularFeature: 'No data yet',
-          todayViews: 0,
-          signupClicks: 0
+      // 4. Get session stats
+      const { data: sessions, error: sessionsError } = await supabase
+        .from('user_sessions')
+        .select('session_start, session_end, device_type')
+        .not('session_end', 'is', null)
+        .gte('session_start', thirtyDaysAgo)
+        .limit(100);
+
+      let avgSessionDuration = 0;
+      let deviceStats = { desktop: 0, mobile: 0, tablet: 0 };
+
+      if (sessions && sessions.length > 0) {
+        // Calculate average session duration
+        const durations = sessions.map(s => {
+          const start = new Date(s.session_start);
+          const end = new Date(s.session_end);
+          return (end - start) / 1000; // seconds
         });
-        setLoading(false);
-        return;
+        avgSessionDuration = Math.round(durations.reduce((a, b) => a + b, 0) / durations.length);
+
+        // Count device types
+        sessions.forEach(s => {
+          const device = s.device_type?.toLowerCase() || 'desktop';
+          if (device === 'mobile') deviceStats.mobile++;
+          else if (device === 'tablet') deviceStats.tablet++;
+          else deviceStats.desktop++;
+        });
       }
 
-      // Calculate unique sessions
-      const uniqueSessions = new Set(allEvents.map(e => e.session_id)).size;
+      // 5. Get feature usage stats
+      const { data: featureData, error: featureError } = await supabase
+        .from('feature_usage')
+        .select('feature_name')
+        .gte('created_at', thirtyDaysAgo);
 
-      // Count signup clicks
-      const signupClicks = allEvents.filter(e => e.action_type === 'signup_click').length;
-
-      // Calculate conversion rate
-      const conversionRate = uniqueSessions > 0 
-        ? ((signupClicks / uniqueSessions) * 100).toFixed(2)
-        : 0;
-
-      // Find most popular feature
-      const featureCounts = allEvents
-        .filter(e => e.action_type === 'view')
-        .reduce((acc, { feature_used }) => {
-          acc[feature_used] = (acc[feature_used] || 0) + 1;
+      let featureUsage = [];
+      if (featureData && featureData.length > 0) {
+        const featureCounts = featureData.reduce((acc, { feature_name }) => {
+          acc[feature_name] = (acc[feature_name] || 0) + 1;
           return acc;
         }, {});
 
-      const popularFeature = Object.keys(featureCounts).length > 0
-        ? Object.keys(featureCounts).sort((a, b) => featureCounts[b] - featureCounts[a])[0]
-        : 'No data yet';
+        featureUsage = Object.entries(featureCounts)
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5);
+      }
 
-      // Count today's views
-      const today = new Date().toISOString().split('T')[0];
-      const todayViews = allEvents.filter(e => 
-        e.created_at.startsWith(today) && e.action_type === 'view'
-      ).length;
+      // 6. Get recent sessions
+      const { data: recentSessions, error: recentError } = await supabase
+        .from('user_sessions')
+        .select('session_id, user_id, session_start, last_activity, pages_visited, device_type')
+        .order('last_activity', { ascending: false })
+        .limit(5);
 
+      // 7. Get recent errors
+      const { data: recentErrors, error: errorsError } = await supabase
+        .from('error_logs')
+        .select('error_type, error_message, page_path, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      // 8. Get recent conversions
+      const { data: conversions, error: conversionsError } = await supabase
+        .from('conversion_events')
+        .select('event_type, source_page, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      // Update state
       setStats({
-        totalSessions: uniqueSessions,
-        conversionRate,
-        popularFeature,
-        todayViews,
-        signupClicks
+        totalUsers: totalUsers || 0,
+        activeUsers,
+        newSignups,
+        avgSessionDuration,
+        totalSessions: sessions?.length || 0,
+        featureUsage,
+        deviceStats,
+        recentSessions: recentSessions || [],
+        recentErrors: recentErrors || [],
+        conversions: conversions || []
       });
+
     } catch (error) {
       console.error('Analytics load error:', error);
       alert('Failed to load analytics: ' + error.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Format duration helper
+  const formatDuration = (seconds) => {
+    if (seconds < 60) return `${seconds}s`;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
+  };
+
+  // Format time ago helper
+  const timeAgo = (dateString) => {
+    const date = new Date(dateString);
+    const seconds = Math.floor((new Date() - date) / 1000);
+    
+    if (seconds < 60) return `${seconds}s ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
   };
 
   // Show access denied screen if not admin
@@ -143,64 +226,186 @@ function AdminAnalytics() {
   if (loading) {
     return (
       <div className="admin-analytics">
-        <h1>📊 Public Demo Analytics</h1>
-        <p>Loading analytics...</p>
+        <h1>📊 Analytics Dashboard</h1>
+        <p>Loading comprehensive analytics...</p>
       </div>
     );
   }
 
   return (
     <div className="admin-analytics">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px' }}>
-        <h1 style={{ margin: 0 }}>📊 Public Demo Analytics</h1>
-        <span style={{
-          display: 'inline-block',
-          background: '#22c55e',
-          color: 'white',
-          padding: '6px 14px',
-          borderRadius: '20px',
-          fontSize: '13px',
-          fontWeight: 'bold'
-        }}>
-          👨‍💼 ADMIN
-        </span>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <h1 style={{ margin: 0 }}>📊 Analytics Dashboard</h1>
+          <span style={{
+            display: 'inline-block',
+            background: '#22c55e',
+            color: 'white',
+            padding: '6px 14px',
+            borderRadius: '20px',
+            fontSize: '13px',
+            fontWeight: 'bold'
+          }}>
+            👨‍💼 ADMIN
+          </span>
+        </div>
+        <button onClick={loadAnalytics} className="refresh-btn">
+          🔄 Refresh Data
+        </button>
       </div>
       
+      {/* Main Stats Grid */}
       <div className="stats-grid">
         <div className="stat-card">
-          <h3>Total Sessions</h3>
-          <p className="stat-value">{stats.totalSessions}</p>
-          <span className="stat-label">Unique visitors</span>
+          <h3>Total Users</h3>
+          <p className="stat-value">{stats.totalUsers}</p>
+          <span className="stat-label">All time</span>
         </div>
 
         <div className="stat-card">
-          <h3>Conversion Rate</h3>
-          <p className="stat-value">{stats.conversionRate}%</p>
-          <span className="stat-label">Demo → Signup clicks</span>
+          <h3>Active Users</h3>
+          <p className="stat-value">{stats.activeUsers}</p>
+          <span className="stat-label">Last 30 days</span>
         </div>
 
         <div className="stat-card">
-          <h3>Most Popular</h3>
-          <p className="stat-value-feature">{stats.popularFeature}</p>
-          <span className="stat-label">Top demo feature</span>
+          <h3>New Signups</h3>
+          <p className="stat-value">{stats.newSignups}</p>
+          <span className="stat-label">Last 7 days</span>
         </div>
 
         <div className="stat-card">
-          <h3>Today's Views</h3>
-          <p className="stat-value">{stats.todayViews}</p>
-          <span className="stat-label">Feature views today</span>
-        </div>
-
-        <div className="stat-card">
-          <h3>Signup Intent</h3>
-          <p className="stat-value">{stats.signupClicks}</p>
-          <span className="stat-label">Total signup clicks</span>
+          <h3>Avg Session</h3>
+          <p className="stat-value">{formatDuration(stats.avgSessionDuration)}</p>
+          <span className="stat-label">Duration</span>
         </div>
       </div>
 
-      <button onClick={loadAnalytics} className="refresh-btn">
-        🔄 Refresh Data
-      </button>
+      {/* Feature Usage Section */}
+      <div style={{ marginTop: '40px' }}>
+        <h2 style={{ marginBottom: '20px' }}>🎯 Feature Usage (Top 5)</h2>
+        <div className="stats-grid">
+          {stats.featureUsage.length > 0 ? (
+            stats.featureUsage.map((feature, idx) => (
+              <div key={idx} className="stat-card">
+                <h3>{feature.name}</h3>
+                <p className="stat-value">{feature.count}</p>
+                <span className="stat-label">Uses</span>
+              </div>
+            ))
+          ) : (
+            <div className="stat-card">
+              <p className="stat-label">No feature usage data yet</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Device Stats */}
+      <div style={{ marginTop: '40px' }}>
+        <h2 style={{ marginBottom: '20px' }}>📱 Device Statistics</h2>
+        <div className="stats-grid">
+          <div className="stat-card">
+            <h3>🖥️ Desktop</h3>
+            <p className="stat-value">{stats.deviceStats.desktop}</p>
+            <span className="stat-label">Sessions</span>
+          </div>
+          <div className="stat-card">
+            <h3>📱 Mobile</h3>
+            <p className="stat-value">{stats.deviceStats.mobile}</p>
+            <span className="stat-label">Sessions</span>
+          </div>
+          <div className="stat-card">
+            <h3>📲 Tablet</h3>
+            <p className="stat-value">{stats.deviceStats.tablet}</p>
+            <span className="stat-label">Sessions</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div style={{ marginTop: '40px' }}>
+        <h2 style={{ marginBottom: '20px' }}>🔥 Recent Activity</h2>
+        <div style={{ background: '#1f2937', padding: '20px', borderRadius: '12px' }}>
+          {stats.recentSessions.length > 0 ? (
+            stats.recentSessions.map((session, idx) => (
+              <div key={idx} style={{ 
+                padding: '15px', 
+                borderBottom: idx < stats.recentSessions.length - 1 ? '1px solid #374151' : 'none'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <strong>{session.session_id.substring(0, 8)}...</strong>
+                    <span style={{ marginLeft: '10px', color: '#9ca3af' }}>|
+                      {session.device_type || 'Desktop'}
+                    </span>
+                  </div>
+                  <span style={{ color: '#9ca3af' }}>{timeAgo(session.last_activity)}</span>
+                </div>
+                <div style={{ marginTop: '5px', color: '#9ca3af', fontSize: '14px' }}>
+                  Pages visited: {session.pages_visited || 0}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p style={{ color: '#9ca3af' }}>No recent sessions</p>
+          )}
+        </div>
+      </div>
+
+      {/* Recent Errors */}
+      {stats.recentErrors.length > 0 && (
+        <div style={{ marginTop: '40px' }}>
+          <h2 style={{ marginBottom: '20px' }}>⚠️ Recent Errors</h2>
+          <div style={{ background: '#1f2937', padding: '20px', borderRadius: '12px' }}>
+            {stats.recentErrors.map((error, idx) => (
+              <div key={idx} style={{ 
+                padding: '15px', 
+                borderBottom: idx < stats.recentErrors.length - 1 ? '1px solid #374151' : 'none'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <strong style={{ color: '#ef4444' }}>{error.error_type}</strong>
+                    <div style={{ marginTop: '5px', color: '#9ca3af', fontSize: '14px' }}>
+                      {error.error_message}
+                    </div>
+                    <div style={{ marginTop: '3px', color: '#6b7280', fontSize: '12px' }}>
+                      Page: {error.page_path}
+                    </div>
+                  </div>
+                  <span style={{ color: '#9ca3af', fontSize: '14px' }}>{timeAgo(error.created_at)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recent Conversions */}
+      {stats.conversions.length > 0 && (
+        <div style={{ marginTop: '40px' }}>
+          <h2 style={{ marginBottom: '20px' }}>🎉 Recent Conversions</h2>
+          <div style={{ background: '#1f2937', padding: '20px', borderRadius: '12px' }}>
+            {stats.conversions.map((conversion, idx) => (
+              <div key={idx} style={{ 
+                padding: '15px', 
+                borderBottom: idx < stats.conversions.length - 1 ? '1px solid #374151' : 'none'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <strong style={{ color: '#22c55e' }}>{conversion.event_type}</strong>
+                    <div style={{ marginTop: '5px', color: '#9ca3af', fontSize: '14px' }}>
+                      Source: {conversion.source_page}
+                    </div>
+                  </div>
+                  <span style={{ color: '#9ca3af', fontSize: '14px' }}>{timeAgo(conversion.created_at)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
