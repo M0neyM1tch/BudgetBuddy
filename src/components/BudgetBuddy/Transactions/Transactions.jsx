@@ -348,32 +348,37 @@ function Transactions({
         {recurringTransactions.length > 0 && (
           <div className="recurring-list">
             <h3>Active Recurring Rules</h3>
-            <ul>
+            <div className="active-recurring-rules">
               {recurringTransactions.map(rule => (
-                <li key={rule.id} className="recurring-item">
-                  <div className="recurring-info">
-                    <strong>{rule.description}</strong>
-                    <span className={rule.category === 'Income' ? 'income-text' : 'expense-text'}>
+                <div key={rule.id} className="recurring-rule-card">
+                  <div className="rule-header">
+                    <span className="rule-icon">
+                      {rule.category === 'Income' ? '💰' : '💸'}
+                    </span>
+                    <div className="rule-info">
+                      <strong>{rule.description}</strong>
+                      <span className="rule-meta">
+                        {rule.frequency === 'monthly' ? `Monthly (Day ${rule.recurday})` : 'Biweekly'} • Next: {new Date(rule.nextrundate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="rule-footer">
+                    <span 
+                      className="rule-amount" 
+                      style={{ color: rule.category === 'Income' ? '#10b981' : '#ef4444' }}
+                    >
                       {rule.category === 'Income' ? '+' : '-'}${Math.abs(rule.amount).toFixed(2)}
                     </span>
-                    <span className="recurring-meta">
-                      {rule.frequency === 'monthly' 
-                        ? `Monthly (Day ${rule.recur_day})` 
-                        : 'Biweekly'}
-                    </span>
-                    <span className="recurring-next">
-                      Next: {rule.next_run_date}
-                    </span>
+                    <button 
+                      className="delete-rule-btn" 
+                      onClick={() => handleDeleteRecurringRule(rule.id)}
+                    >
+                      ×
+                    </button>
                   </div>
-                  <button 
-                    className="btn-delete-small"
-                    onClick={() => handleDeleteRecurringRule(rule.id)}
-                  >
-                    ×
-                  </button>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         )}
       </div>

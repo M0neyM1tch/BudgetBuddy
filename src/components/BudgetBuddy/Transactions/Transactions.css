@@ -1049,3 +1049,102 @@
   color: #9ca3af;
   font-style: italic;
 }
+/* Active Recurring Rules - Card Layout */
+.active-recurring-rules {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.recurring-rule-card {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(100, 116, 139, 0.4);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.recurring-rule-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+  border-radius: 12px 0 0 12px;
+}
+
+.recurring-rule-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  border-color: rgba(16, 185, 129, 0.6);
+}
+
+.rule-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.rule-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.rule-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rule-info strong {
+  color: #f1f5f9;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.rule-meta {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.rule-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+.rule-amount {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.delete-rule-btn {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-rule-btn:hover {
+  background: rgba(239, 68, 68, 0.4);
+  border-color: #ef4444;
+  transform: scale(1.1);
+}
