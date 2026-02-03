@@ -287,6 +287,172 @@
   box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
 }
 
+/* Loss Aversion Section */
+.loss-aversion-section {
+  padding: 80px 2rem;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(185, 28, 28, 0.05) 100%);
+  border-top: 1px solid rgba(239, 68, 68, 0.2);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.loss-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.loss-title {
+  font-size: 48px;
+  font-weight: 700;
+  color: #ef4444;
+  margin-bottom: 16px;
+}
+
+.loss-subtitle {
+  font-size: 20px;
+  color: #cbd5e1;
+  margin-bottom: 48px;
+}
+
+.loss-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  margin-bottom: 48px;
+}
+
+.loss-card {
+  background: rgba(30, 41, 59, 0.8);
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+}
+
+.loss-amount {
+  font-size: 56px;
+  font-weight: 800;
+  color: #ef4444;
+  margin-bottom: 12px;
+}
+
+.loss-label {
+  font-size: 22px;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 12px;
+}
+
+.loss-desc {
+  font-size: 15px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.loss-total {
+  background: rgba(239, 68, 68, 0.1);
+  border: 2px solid rgba(239, 68, 68, 0.4);
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 48px;
+  font-size: 24px;
+  color: #f1f5f9;
+}
+
+.loss-total strong {
+  color: #ef4444;
+  font-size: 32px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.loss-impact {
+  background: rgba(16, 185, 129, 0.1);
+  border: 2px solid rgba(16, 185, 129, 0.3);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 48px;
+}
+
+.loss-impact p {
+  font-size: 20px;
+  color: #cbd5e1;
+  margin-bottom: 32px;
+}
+
+.impact-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.impact-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.impact-number {
+  font-size: 42px;
+  font-weight: 800;
+  color: #10b981;
+}
+
+.impact-label {
+  font-size: 16px;
+  color: #94a3b8;
+}
+
+.cta-btn-loss {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  padding: 20px 60px;
+  border-radius: 14px;
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.5);
+}
+
+.cta-btn-loss:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 40px rgba(239, 68, 68, 0.7);
+}
+
+/* Social Proof Section */
+.social-proof-section {
+  padding: 60px 2rem;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.social-proof-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 48px;
+  text-align: center;
+}
+
+.proof-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.proof-number {
+  font-size: 56px;
+  font-weight: 800;
+  color: #10b981;
+}
+
+.proof-label {
+  font-size: 18px;
+  color: #cbd5e1;
+}
+
 /* Features Section */
 .features-section {
   padding: 80px 2rem;
@@ -300,10 +466,17 @@
 
 .section-title {
   text-align: center;
-  font-size: 40px;
+  font-size: 48px;
   font-weight: 700;
-  margin-bottom: 60px;
+  margin-bottom: 16px;
   color: #f1f5f9;
+}
+
+.section-subtitle {
+  text-align: center;
+  font-size: 20px;
+  color: #cbd5e1;
+  margin-bottom: 60px;
 }
 
 .features-grid {
@@ -343,6 +516,119 @@
   color: #cbd5e1;
   font-size: 15px;
   line-height: 1.6;
+}
+
+/* Comparison Section */
+.comparison-section {
+  padding: 80px 2rem;
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.comparison-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.comparison-table {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-top: 48px;
+}
+
+.comparison-column {
+  background: rgba(30, 41, 59, 0.6);
+  border-radius: 16px;
+  padding: 40px;
+}
+
+.comparison-column.before {
+  border: 2px solid rgba(239, 68, 68, 0.3);
+}
+
+.comparison-column.after {
+  border: 2px solid rgba(16, 185, 129, 0.4);
+}
+
+.comparison-column h3 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.comparison-column.before h3 {
+  color: #ef4444;
+}
+
+.comparison-column.after h3 {
+  color: #10b981;
+}
+
+.comparison-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-size: 16px;
+  color: #cbd5e1;
+}
+
+.item-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Risk Reversal Section */
+.risk-reversal-section {
+  padding: 80px 2rem;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.risk-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.risk-container h2 {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 48px;
+  color: #f1f5f9;
+}
+
+.risk-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+}
+
+.risk-item {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+}
+
+.risk-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.risk-item strong {
+  display: block;
+  font-size: 20px;
+  color: #10b981;
+  margin-bottom: 8px;
+}
+
+.risk-item p {
+  font-size: 14px;
+  color: #94a3b8;
+  margin: 0;
 }
 
 /* CTA Section */
@@ -435,6 +721,28 @@
   .features-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .loss-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .impact-stats {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .comparison-table {
+    grid-template-columns: 1fr;
+  }
+
+  .risk-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .social-proof-container {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -477,16 +785,20 @@
     grid-template-columns: 1fr;
   }
 
-  .cta-container h2 {
+  .section-title {
     font-size: 36px;
   }
 
-  .section-title {
-    font-size: 32px;
+  .loss-title {
+    font-size: 36px;
   }
 
   .calculator-embed {
     padding: 24px;
+  }
+
+  .risk-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -510,5 +822,17 @@
 
   .calculator-header h3 {
     font-size: 22px;
+  }
+
+  .loss-amount {
+    font-size: 42px;
+  }
+
+  .impact-number {
+    font-size: 32px;
+  }
+
+  .section-title {
+    font-size: 28px;
   }
 }
