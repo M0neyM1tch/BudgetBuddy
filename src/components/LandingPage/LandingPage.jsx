@@ -40,7 +40,7 @@ function LandingPage() {
             <span className="beta-badge">BETA</span>
           </div>
           <button className="cta-btn-nav" onClick={() => navigate('/login')}>
-            Get Started Free
+            Log In / Sign Up
           </button>
         </div>
       </nav>
@@ -57,26 +57,6 @@ function LandingPage() {
               See exactly when you can quit your job and live off your investments.
               Try our Freedom Calculator below — no signup required.
             </p>
-
-            <div className="hero-features">
-              <div className="feature-item">
-                <span className="feature-icon">🎯</span>
-                <span>Track spending & income</span>
-              </div>
-              <div className="feature-item">
-                <span className="feature-icon">📈</span>
-                <span>Visualize your progress</span>
-              </div>
-              <div className="feature-item">
-                <span className="feature-icon">⚡</span>
-                <span>Automate recurring transactions</span>
-              </div>
-            </div>
-
-            <button className="cta-btn-primary" onClick={() => navigate('/login')}>
-              Start Tracking Free
-            </button>
-            <p className="cta-subtext">No credit card required • Free forever</p>
           </div>
 
           {/* Embedded Freedom Calculator */}
@@ -186,7 +166,7 @@ function LandingPage() {
 
               <div className="calculator-cta">
                 <button className="calc-cta-btn" onClick={() => navigate('/login')}>
-                  Save My Progress →
+                  Start Tracking Free
                 </button>
               </div>
             </div>
@@ -202,38 +182,56 @@ function LandingPage() {
           <div className="features-grid">
             <div className="feature-card">
               <div className="feature-icon-large">📊</div>
-              <h3>Smart Dashboard</h3>
-              <p>See your entire financial picture at a glance with real-time insights and health scores</p>
+              <h3>Financial Health Dashboard</h3>
+              <p>Get a complete snapshot of your finances with real-time health scores, cash flow analysis, and 12-month projections based on your recurring transactions</p>
             </div>
 
             <div className="feature-card">
               <div className="feature-icon-large">🔁</div>
-              <h3>Recurring Transactions</h3>
-              <p>Set up automatic income and expenses. Never miss tracking your paycheck or rent again</p>
+              <h3>Smart Recurring Transactions</h3>
+              <p>Never manually enter your paycheck or rent again. Set up biweekly or monthly recurring income and expenses that automatically update your budget</p>
             </div>
 
             <div className="feature-card">
               <div className="feature-icon-large">🎯</div>
-              <h3>Goal Tracking</h3>
-              <p>Set financial goals and watch your progress in real-time as you save</p>
+              <h3>Visual Goal Tracking</h3>
+              <p>Set savings goals for vacations, emergency funds, or down payments. Watch your progress in real-time with visual indicators and automated contribution tracking</p>
             </div>
 
             <div className="feature-card">
               <div className="feature-icon-large">📈</div>
-              <h3>Advanced Analytics</h3>
-              <p>Interactive charts and spending breakdowns help you understand where your money goes</p>
+              <h3>Interactive Analytics</h3>
+              <p>Beautiful charts break down your spending by category, track your net worth over time, and identify trends to help you make smarter financial decisions</p>
             </div>
 
             <div className="feature-card">
               <div className="feature-icon-large">💰</div>
-              <h3>Freedom Calculator</h3>
-              <p>Calculate when you can retire based on your savings rate and lifestyle expenses</p>
+              <h3>Multiple Calculators</h3>
+              <p>Beyond the Freedom Calculator, access mortgage calculators, retirement planners, and investment analyzers to make informed financial decisions</p>
+            </div>
+
+            <div className="feature-card">
+              <div className="feature-icon-large">💸</div>
+              <h3>Transaction Management</h3>
+              <p>Track every dollar with detailed transaction history, category editing, search functionality, and the ability to import data via CSV upload</p>
+            </div>
+
+            <div className="feature-card">
+              <div className="feature-icon-large">📊</div>
+              <h3>Investment Insights</h3>
+              <p>Research stocks, analyze options strategies, and track your portfolio performance all in one place without switching between multiple apps</p>
+            </div>
+
+            <div className="feature-card">
+              <div className="feature-icon-large">⏱️</div>
+              <h3>Timeline Projections</h3>
+              <p>See month-by-month forecasts of your financial future based on current income, spending patterns, and savings rate to stay on track to your goals</p>
             </div>
 
             <div className="feature-card">
               <div className="feature-icon-large">🛡️</div>
               <h3>Private & Secure</h3>
-              <p>Your data is encrypted and never shared. You own your financial information</p>
+              <p>Bank-level encryption keeps your data safe. Your financial information is private, never shared, and you maintain complete ownership of your data</p>
             </div>
           </div>
         </div>
@@ -247,7 +245,7 @@ function LandingPage() {
           <button className="cta-btn-large" onClick={() => navigate('/login')}>
             Start Free Today
           </button>
-          <p className="cta-subtext">No credit card • Cancel anytime • Free forever</p>
+          <p className="cta-subtext">No credit card required • Free forever</p>
         </div>
       </section>
 
