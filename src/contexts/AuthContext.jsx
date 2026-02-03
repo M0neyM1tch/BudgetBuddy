@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { trackConversion } from '../utils/analytics';
 
 const AuthContext = createContext();
 
@@ -72,6 +73,8 @@ export function AuthProvider({ children }) {
       }
     });
     if (error) throw error;
+    
+    // Tracking happens in Auth.jsx after successful signup
     return data;
   };
 
@@ -81,6 +84,16 @@ export function AuthProvider({ children }) {
       password,
     });
     if (error) throw error;
+    
+    // Track successful login conversion
+    if (data?.user) {
+      trackConversion('login', '/login', {
+        login_method: 'password',
+        user_id: data.user.id
+      }, data.user.id);
+      console.log('📊 Login conversion tracked');
+    }
+    
     return data;
   };
 
@@ -88,6 +101,8 @@ export function AuthProvider({ children }) {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     setIsAdmin(false);
+    
+    // Note: Logout event tracking happens in BudgetBuddy.jsx handleLogout
   };
 
   const value = {

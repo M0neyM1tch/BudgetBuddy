@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
+import { trackEvent, trackConversion, trackError } from '../../utils/analytics';
 import './Auth.css';
 
 export default function Auth() {
@@ -43,17 +44,42 @@ export default function Auth() {
 
     try {
       if (isLogin) {
+        // Track login attempt
+        trackEvent(null, 'auth', {
+          category: 'auth',
+          action: 'login_attempt',
+          label: 'password_login'
+        });
+
         await login(email, password);
+        
+        // Success tracking happens in AuthContext
+        console.log('✅ Login successful');
       } else {
         if (!name || name.trim().length < 2) {
           throw new Error('Please enter a valid name (at least 2 characters)');
         }
         
+        // Track signup attempt
+        trackEvent(null, 'auth', {
+          category: 'auth',
+          action: 'signup_attempt',
+          label: 'email_signup'
+        });
+        
         await register(name, email, password);
+        
+        // Track signup success
+        trackConversion('signup', '/login', {
+          signup_method: 'email',
+          requires_email_confirmation: true
+        });
         
         setSuccessMessage(
           'Account created! Please check your email to confirm your account before logging in.'
         );
+        
+        console.log('🎉 Signup conversion tracked');
         
         setName('');
         setEmail('');
@@ -65,17 +91,42 @@ export default function Auth() {
         }, 3000);
       }
     } catch (err) {
+      let errorType = 'unknown';
+      let errorMessage = err.message;
+
       if (err.message.includes('User already registered')) {
-        setError('This email is already registered. Please login instead.');
+        errorType = 'duplicate_email';
+        errorMessage = 'This email is already registered. Please login instead.';
       } else if (err.message.includes('Invalid login credentials')) {
-        setError('Invalid email or password. Please try again.');
+        errorType = 'invalid_credentials';
+        errorMessage = 'Invalid email or password. Please try again.';
       } else if (err.message.includes('Email not confirmed')) {
-        setError('Please confirm your email before logging in. Check your inbox.');
+        errorType = 'email_not_confirmed';
+        errorMessage = 'Please confirm your email before logging in. Check your inbox.';
       } else if (err.message.includes('Password should')) {
-        setError('Password does not meet security requirements.');
-      } else {
-        setError(err.message);
+        errorType = 'weak_password';
+        errorMessage = 'Password does not meet security requirements.';
       }
+
+      setError(errorMessage);
+
+      // Track auth error
+      trackError(
+        `auth_${isLogin ? 'login' : 'signup'}_error`,
+        errorType,
+        err.stack || '',
+        null,
+        {
+          error_type: errorType,
+          auth_method: isLogin ? 'login' : 'signup'
+        }
+      );
+
+      trackEvent(null, 'auth', {
+        category: 'auth',
+        action: isLogin ? 'login_failed' : 'signup_failed',
+        label: errorType
+      });
     } finally {
       setLoading(false);
     }
@@ -88,6 +139,13 @@ const handleForgotPassword = async (e) => {
   setLoading(true);
 
   try {
+    // Track forgot password request
+    trackEvent(null, 'auth', {
+      category: 'auth',
+      action: 'forgot_password_request',
+      label: 'email_reset'
+    });
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: 'https://budg.ca/reset-password'
     });
@@ -95,17 +153,40 @@ const handleForgotPassword = async (e) => {
     if (error) throw error;
 
     setSuccessMessage('Password reset email sent! Check your inbox.');
+    
+    // Track success
+    trackEvent(null, 'auth', {
+      category: 'auth',
+      action: 'forgot_password_success',
+      label: 'email_sent'
+    });
+
     setTimeout(() => {
       setShowForgotPassword(false);
       setSuccessMessage('');
     }, 3000);
   } catch (err) {
     setError(err.message);
+    
+    // Track error
+    trackError('forgot_password_error', err.message, err.stack || '', null);
   } finally {
     setLoading(false);
   }
 };
 
+  // Track form toggle
+  const handleFormToggle = () => {
+    trackEvent(null, 'auth', {
+      category: 'auth',
+      action: 'form_toggle',
+      label: isLogin ? 'switch_to_signup' : 'switch_to_login'
+    });
+
+    setIsLogin(!isLogin);
+    setError('');
+    setSuccessMessage('');
+  };
 
   const passwordStrength = getPasswordStrengthLabel();
 
@@ -250,11 +331,7 @@ const handleForgotPassword = async (e) => {
           {isLogin ? "Don't have an account? " : "Already have an account? "}
           <button 
             type="button" 
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setError('');
-              setSuccessMessage('');
-            }}
+            onClick={handleFormToggle}
             className="auth-toggle-btn"
           >
             {isLogin ? 'Sign Up' : 'Login'}
