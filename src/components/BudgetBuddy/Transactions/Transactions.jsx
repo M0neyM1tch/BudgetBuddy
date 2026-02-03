@@ -358,7 +358,7 @@ function Transactions({
                     <div className="rule-info">
                       <strong>{rule.description}</strong>
                       <span className="rule-meta">
-                        {rule.frequency === 'monthly' ? `Monthly (Day ${rule.recurday})` : 'Biweekly'} • Next: {new Date(rule.nextrundate).toLocaleDateString()}
+                        {rule.frequency === 'monthly' ? `Monthly (Day ${rule.recur_day || rule.recurday})` : 'Biweekly'} • Next: {new Date(rule.next_run_date || rule.nextrundate).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
