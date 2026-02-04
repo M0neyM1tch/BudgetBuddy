@@ -127,7 +127,7 @@ function LandingPage() {
             className="cta-btn-nav" 
             onClick={() => handleCTAClick('nav_button')}
           >
-            Log In
+            Log In/ Sign Up
           </button>
         </div>
       </nav>
