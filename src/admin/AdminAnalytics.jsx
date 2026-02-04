@@ -66,31 +66,29 @@ function AdminAnalytics() {
 
       const newStats = { ...stats };
 
-      // 1. Get total unique users (with error handling)
+      // 1. Get total unique users from transactions table
       try {
-        const { data: userData } = await queryWithTimeout(() => 
-          supabase
-            .from('user_sessions')
-            .select('user_id')
-            .not('user_id', 'is', null)
-            .limit(1000)
-        );
-        newStats.totalUsers = userData ? new Set(userData.map(u => u.user_id)).size : 0;
+        const { data: userData } = await supabase
+          .from('transactions')
+          .select('user_id');
+        
+        if (userData && userData.length > 0) {
+          newStats.totalUsers = new Set(userData.map(t => t.user_id)).size;
+        }
       } catch (err) {
         console.warn('Failed to load total users:', err);
       }
 
-      // 2. Get active users (last 30 days)
+      // 2. Get active users (users who created/modified data in last 30 days)
       try {
-        const { data: activeUsersData } = await queryWithTimeout(() =>
-          supabase
-            .from('user_sessions')
-            .select('user_id')
-            .gte('session_start', thirtyDaysAgo)
-            .not('user_id', 'is', null)
-            .limit(500)
-        );
-        newStats.activeUsers = activeUsersData ? new Set(activeUsersData.map(s => s.user_id)).size : 0;
+        const { data: activeData } = await supabase
+          .from('transactions')
+          .select('user_id, created_at')
+          .gte('created_at', thirtyDaysAgo);
+        
+        if (activeData && activeData.length > 0) {
+          newStats.activeUsers = new Set(activeData.map(t => t.user_id)).size;
+        }
       } catch (err) {
         console.warn('Failed to load active users:', err);
       }
@@ -109,15 +107,15 @@ function AdminAnalytics() {
         console.warn('Failed to load new signups:', err);
       }
 
-      // 4. Get session stats (completed sessions only)
+      // 4. Get session stats (use last_activity instead of session_end)
       try {
         const { data: sessions } = await queryWithTimeout(() =>
           supabase
             .from('user_sessions')
-            .select('session_start, session_end, device_type')
-            .not('session_end', 'is', null)
+            .select('session_start, last_activity, device_type')
+            .not('last_activity', 'is', null)
             .gte('session_start', thirtyDaysAgo)
-            .limit(100)
+            .limit(200)
         );
 
         if (sessions && sessions.length > 0) {
@@ -125,8 +123,8 @@ function AdminAnalytics() {
           const durations = sessions
             .map(s => {
               const start = new Date(s.session_start);
-              const end = new Date(s.session_end);
-              const duration = (end - start) / 1000;
+              const lastActive = new Date(s.last_activity);
+              const duration = (lastActive - start) / 1000;
               return duration > 0 && duration < 86400 ? duration : 0; // Max 24 hours
             })
             .filter(d => d > 0);
@@ -139,8 +137,8 @@ function AdminAnalytics() {
           const deviceStats = { desktop: 0, mobile: 0, tablet: 0 };
           sessions.forEach(s => {
             const device = (s.device_type || 'desktop').toLowerCase();
-            if (device.includes('mobile')) deviceStats.mobile++;
-            else if (device.includes('tablet')) deviceStats.tablet++;
+            if (device.includes('mobile') || device.includes('phone')) deviceStats.mobile++;
+            else if (device.includes('tablet') || device.includes('ipad')) deviceStats.tablet++;
             else deviceStats.desktop++;
           });
           newStats.deviceStats = deviceStats;
