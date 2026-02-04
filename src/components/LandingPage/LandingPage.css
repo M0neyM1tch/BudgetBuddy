@@ -805,7 +805,7 @@
 @media (max-width: 480px) {
   /* Aggressively reduce spacing on very small screens */
   .landing-nav-content {
-    padding: 0 5rem;
+    padding: 0 7rem;
     gap: 0.5rem;
   }
 
