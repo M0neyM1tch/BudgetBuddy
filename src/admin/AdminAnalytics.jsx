@@ -11,7 +11,6 @@ function AdminAnalytics() {
     totalUsers: 0,
     activeUsers: 0,
     newSignups: 0,
-    avgSessionDuration: 0,
     totalSessions: 0,
     featureUsage: [],
     deviceStats: { desktop: 0, mobile: 0, tablet: 0 },
@@ -107,45 +106,34 @@ function AdminAnalytics() {
         console.warn('Failed to load new signups:', err);
       }
 
-      // 4. Get session stats (use last_activity instead of session_end)
+      // 4. Get device stats from ALL sessions (last 30 days)
       try {
         const { data: sessions } = await queryWithTimeout(() =>
           supabase
             .from('user_sessions')
-            .select('session_start, last_activity, device_type')
-            .not('last_activity', 'is', null)
+            .select('device_type, session_id')
             .gte('session_start', thirtyDaysAgo)
-            .limit(200)
+            .limit(500)
         );
 
         if (sessions && sessions.length > 0) {
-          // Calculate average session duration
-          const durations = sessions
-            .map(s => {
-              const start = new Date(s.session_start);
-              const lastActive = new Date(s.last_activity);
-              const duration = (lastActive - start) / 1000;
-              return duration > 0 && duration < 86400 ? duration : 0; // Max 24 hours
-            })
-            .filter(d => d > 0);
-
-          if (durations.length > 0) {
-            newStats.avgSessionDuration = Math.round(durations.reduce((a, b) => a + b, 0) / durations.length);
-          }
-
           // Count device types
           const deviceStats = { desktop: 0, mobile: 0, tablet: 0 };
           sessions.forEach(s => {
             const device = (s.device_type || 'desktop').toLowerCase();
-            if (device.includes('mobile') || device.includes('phone')) deviceStats.mobile++;
-            else if (device.includes('tablet') || device.includes('ipad')) deviceStats.tablet++;
-            else deviceStats.desktop++;
+            if (device.includes('mobile') || device.includes('phone')) {
+              deviceStats.mobile++;
+            } else if (device.includes('tablet') || device.includes('ipad')) {
+              deviceStats.tablet++;
+            } else {
+              deviceStats.desktop++;
+            }
           });
           newStats.deviceStats = deviceStats;
           newStats.totalSessions = sessions.length;
         }
       } catch (err) {
-        console.warn('Failed to load session stats:', err);
+        console.warn('Failed to load device stats:', err);
       }
 
       // 5. Get feature usage stats
@@ -175,16 +163,38 @@ function AdminAnalytics() {
         console.warn('Failed to load feature usage:', err);
       }
 
-      // 6. Get recent sessions
+      // 6. Get recent sessions with page view counts
       try {
-        const { data: recentSessions } = await queryWithTimeout(() =>
-          supabase
+        const { data: recentSessions } = await queryWithTimeout(async () => {
+          // Get recent sessions
+          const sessions = await supabase
             .from('user_sessions')
-            .select('session_id, user_id, session_start, last_activity, pages_visited, device_type')
+            .select('session_id, user_id, session_start, last_activity, device_type')
             .order('last_activity', { ascending: false })
-            .limit(5)
-        );
-        newStats.recentSessions = recentSessions || [];
+            .limit(5);
+
+          // For each session, count page views
+          if (sessions.data && sessions.data.length > 0) {
+            const sessionsWithCounts = await Promise.all(
+              sessions.data.map(async (session) => {
+                const { count } = await supabase
+                  .from('user_events')
+                  .select('*', { count: 'exact', head: true })
+                  .eq('session_id', session.session_id)
+                  .eq('event_type', 'page_view');
+                
+                return {
+                  ...session,
+                  pages_visited: count || 0
+                };
+              })
+            );
+            return { data: sessionsWithCounts };
+          }
+          return sessions;
+        });
+        
+        newStats.recentSessions = recentSessions?.data || [];
       } catch (err) {
         console.warn('Failed to load recent sessions:', err);
       }
@@ -226,15 +236,6 @@ function AdminAnalytics() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Format duration helper
-  const formatDuration = (seconds) => {
-    if (!seconds || seconds < 1) return '0s';
-    if (seconds < 60) return `${seconds}s`;
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
   };
 
   // Format time ago helper
@@ -350,9 +351,9 @@ function AdminAnalytics() {
         </div>
 
         <div className="stat-card">
-          <h3>Avg Session</h3>
-          <p className="stat-value">{formatDuration(stats.avgSessionDuration)}</p>
-          <span className="stat-label">Duration</span>
+          <h3>Total Sessions</h3>
+          <p className="stat-value">{stats.totalSessions}</p>
+          <span className="stat-label">Last 30 days</span>
         </div>
       </div>
 
@@ -410,15 +411,15 @@ function AdminAnalytics() {
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <strong>{session.session_id ? session.session_id.substring(0, 8) + '...' : 'Unknown'}</strong>
-                    <span style={{ marginLeft: '10px', color: '#9ca3af' }}>|
-                      {session.device_type || 'Desktop'}
+                    <strong>{session.session_id ? session.session_id.substring(0, 20) + '...' : 'Unknown'}</strong>
+                    <span style={{ marginLeft: '10px', color: '#9ca3af' }}>
+                      | {session.device_type || 'Desktop'}
                     </span>
                   </div>
                   <span style={{ color: '#9ca3af' }}>{timeAgo(session.last_activity)}</span>
                 </div>
                 <div style={{ marginTop: '5px', color: '#9ca3af', fontSize: '14px' }}>
-                  Pages visited: {session.pages_visited || 0}
+                  User: {session.user_id ? session.user_id.substring(0, 8) + '...' : 'Anonymous'} | Pages: {session.pages_visited || 0}
                 </div>
               </div>
             ))
