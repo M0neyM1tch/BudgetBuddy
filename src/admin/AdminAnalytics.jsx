@@ -51,18 +51,30 @@ function AdminAnalytics() {
 
       const newStats = { ...stats };
 
-      // 1. Total Users
+      // 1. Total Users (from profiles table)
       try {
-        const { data: userData } = await supabase
-          .from('transactions')
-          .select('user_id');
+        const { count, error } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
         
-        if (userData && userData.length > 0) {
-          newStats.totalUsers = new Set(userData.map(t => t.user_id)).size;
-        }
+        if (error) throw error;
+        newStats.totalUsers = count || 0;
       } catch (err) {
         console.warn('Failed to load total users:', err);
+        // Fallback: count from auth.users or transactions
+        try {
+          const { data: userData } = await supabase
+            .from('transactions')
+            .select('user_id');
+          
+          if (userData && userData.length > 0) {
+            newStats.totalUsers = new Set(userData.map(t => t.user_id)).size;
+          }
+        } catch (fallbackErr) {
+          console.warn('Fallback failed:', fallbackErr);
+        }
       }
+
 
       // 2. Active Users
       try {
