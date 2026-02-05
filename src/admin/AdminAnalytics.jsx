@@ -57,11 +57,14 @@ function AdminAnalytics() {
           .from('profiles')
           .select('*', { count: 'exact', head: true });
         
-        if (error) throw error;
+        if (error) {
+          console.warn('Error loading total users from profiles:', error);
+          throw error;
+        }
         newStats.totalUsers = count || 0;
       } catch (err) {
         console.warn('Failed to load total users:', err);
-        // Fallback: count from auth.users or transactions
+        // Fallback: count unique users from transactions
         try {
           const { data: userData } = await supabase
             .from('transactions')
