@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { trackConversion } from '../utils/analytics';
 
@@ -12,10 +12,33 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Cache to prevent duplicate admin checks
+  const adminCheckInProgress = useRef(false);
+  const adminCache = useRef({ userId: null, isAdmin: false, timestamp: 0 });
 
-  // Helper function to check admin status with timeout
+  // Helper function to check admin status with caching
   const checkAdminStatus = async (userId) => {
     try {
+      // Check cache (valid for 30 seconds)
+      const now = Date.now();
+      if (
+        adminCache.current.userId === userId &&
+        now - adminCache.current.timestamp < 30000
+      ) {
+        console.log('ℹ️ Using cached admin status:', adminCache.current.isAdmin);
+        return adminCache.current.isAdmin;
+      }
+      
+      // Prevent duplicate simultaneous checks
+      if (adminCheckInProgress.current) {
+        console.log('⏳ Admin check already in progress, waiting...');
+        // Wait for existing check to complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+        return adminCache.current.isAdmin;
+      }
+      
+      adminCheckInProgress.current = true;
       console.log('🔍 Checking admin status for user:', userId);
       
       // Create timeout promise
@@ -34,7 +57,7 @@ export function AuthProvider({ children }) {
       
       if (error) {
         console.warn('⚠️ Error checking admin status:', error.message);
-        return false;
+        return adminCache.current.isAdmin || false;
       }
       
       if (!profile) {
@@ -43,6 +66,14 @@ export function AuthProvider({ children }) {
       }
       
       const isUserAdmin = profile.is_admin === true;
+      
+      // Update cache
+      adminCache.current = {
+        userId,
+        isAdmin: isUserAdmin,
+        timestamp: now
+      };
+      
       if (isUserAdmin) {
         console.log('✅ User is admin (verified from database)');
       } else {
@@ -51,8 +82,10 @@ export function AuthProvider({ children }) {
       return isUserAdmin;
     } catch (err) {
       console.error('❌ Failed to check admin status:', err.message);
-      // On timeout or error, default to non-admin (safe fallback)
-      return false;
+      // Return cached value on timeout
+      return adminCache.current.isAdmin || false;
+    } finally {
+      adminCheckInProgress.current = false;
     }
   };
 
@@ -98,7 +131,7 @@ export function AuthProvider({ children }) {
       
       setUser(session?.user ?? null);
       
-      // Check admin status
+      // Check admin status (will use cache if recent)
       if (session?.user) {
         try {
           const adminStatus = await checkAdminStatus(session.user.id);
@@ -109,6 +142,8 @@ export function AuthProvider({ children }) {
         }
       } else {
         setIsAdmin(false);
+        // Clear cache on logout
+        adminCache.current = { userId: null, isAdmin: false, timestamp: 0 };
       }
     });
 
@@ -154,6 +189,8 @@ export function AuthProvider({ children }) {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     setIsAdmin(false);
+    // Clear cache
+    adminCache.current = { userId: null, isAdmin: false, timestamp: 0 };
   };
 
   const value = {
