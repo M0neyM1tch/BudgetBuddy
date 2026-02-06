@@ -13,16 +13,24 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Helper function to check admin status
+  // Helper function to check admin status with timeout
   const checkAdminStatus = async (userId) => {
     try {
       console.log('🔍 Checking admin status for user:', userId);
       
-      const { data: profile, error } = await supabase
+      // Create timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Admin check timeout after 5 seconds')), 5000);
+      });
+      
+      // Race between query and timeout
+      const queryPromise = supabase
         .from('profiles')
         .select('is_admin')
         .eq('id', userId)
-        .maybeSingle(); // Won't throw error if profile doesn't exist
+        .maybeSingle();
+      
+      const { data: profile, error } = await Promise.race([queryPromise, timeoutPromise]);
       
       if (error) {
         console.warn('⚠️ Error checking admin status:', error.message);
@@ -42,7 +50,8 @@ export function AuthProvider({ children }) {
       }
       return isUserAdmin;
     } catch (err) {
-      console.error('❌ Failed to check admin status:', err);
+      console.error('❌ Failed to check admin status:', err.message);
+      // On timeout or error, default to non-admin (safe fallback)
       return false;
     }
   };
