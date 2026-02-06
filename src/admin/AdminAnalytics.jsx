@@ -11,18 +11,14 @@ function AdminAnalytics() {
     totalUsers: 0,
     activeUsers: 0,
     newSignups: 0,
-    avgSessionDuration: 0,
-    totalSessions: 0,
     featureUsage: [],
-    deviceStats: { desktop: 0, mobile: 0, tablet: 0 },
-    recentSessions: [],
     recentErrors: [],
     conversions: []
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Authorization check - redirect if not admin
+  // Authorization check
   useEffect(() => {
     if (!user) {
       alert('Please log in to access admin analytics');
@@ -37,36 +33,25 @@ function AdminAnalytics() {
     }
   }, [user, isAdmin, navigate]);
 
-  // Load analytics data only if user is admin
+  // Load analytics data
   useEffect(() => {
     if (user && isAdmin) {
       loadAnalytics();
     }
   }, [user, isAdmin]);
 
-  // Helper: Query with timeout protection
-  const queryWithTimeout = async (queryFn, timeoutMs = 10000) => {
-    return Promise.race([
-      queryFn(),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Query timeout')), timeoutMs)
-      )
-    ]);
-  };
-
   const loadAnalytics = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Calculate date ranges
       const now = new Date();
       const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
       const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
 
       const newStats = { ...stats };
 
-      // 1. Get total unique users from transactions table
+      // 1. Total Users
       try {
         const { data: userData } = await supabase
           .from('transactions')
@@ -79,7 +64,7 @@ function AdminAnalytics() {
         console.warn('Failed to load total users:', err);
       }
 
-      // 2. Get active users (users who created/modified data in last 30 days)
+      // 2. Active Users
       try {
         const { data: activeData } = await supabase
           .from('transactions')
@@ -93,70 +78,25 @@ function AdminAnalytics() {
         console.warn('Failed to load active users:', err);
       }
 
-      // 3. Get new signups (last 7 days)
+      // 3. New Signups
       try {
-        const { data: newSignupsData } = await queryWithTimeout(() =>
-          supabase
-            .from('conversion_events')
-            .select('id')
-            .eq('event_type', 'signup')
-            .gte('created_at', sevenDaysAgo)
-        );
+        const { data: newSignupsData } = await supabase
+          .from('conversion_events')
+          .select('id')
+          .eq('event_type', 'signup')
+          .gte('created_at', sevenDaysAgo);
         newStats.newSignups = newSignupsData ? newSignupsData.length : 0;
       } catch (err) {
         console.warn('Failed to load new signups:', err);
       }
 
-      // 4. Get session stats (use last_activity instead of session_end)
+      // 4. Feature Usage
       try {
-        const { data: sessions } = await queryWithTimeout(() =>
-          supabase
-            .from('user_sessions')
-            .select('session_start, last_activity, device_type')
-            .not('last_activity', 'is', null)
-            .gte('session_start', thirtyDaysAgo)
-            .limit(200)
-        );
-
-        if (sessions && sessions.length > 0) {
-          // Calculate average session duration
-          const durations = sessions
-            .map(s => {
-              const start = new Date(s.session_start);
-              const lastActive = new Date(s.last_activity);
-              const duration = (lastActive - start) / 1000;
-              return duration > 0 && duration < 86400 ? duration : 0; // Max 24 hours
-            })
-            .filter(d => d > 0);
-
-          if (durations.length > 0) {
-            newStats.avgSessionDuration = Math.round(durations.reduce((a, b) => a + b, 0) / durations.length);
-          }
-
-          // Count device types
-          const deviceStats = { desktop: 0, mobile: 0, tablet: 0 };
-          sessions.forEach(s => {
-            const device = (s.device_type || 'desktop').toLowerCase();
-            if (device.includes('mobile') || device.includes('phone')) deviceStats.mobile++;
-            else if (device.includes('tablet') || device.includes('ipad')) deviceStats.tablet++;
-            else deviceStats.desktop++;
-          });
-          newStats.deviceStats = deviceStats;
-          newStats.totalSessions = sessions.length;
-        }
-      } catch (err) {
-        console.warn('Failed to load session stats:', err);
-      }
-
-      // 5. Get feature usage stats
-      try {
-        const { data: featureData } = await queryWithTimeout(() =>
-          supabase
-            .from('feature_usage')
-            .select('feature_name')
-            .gte('created_at', thirtyDaysAgo)
-            .limit(500)
-        );
+        const { data: featureData } = await supabase
+          .from('feature_usage')
+          .select('feature_name')
+          .gte('created_at', thirtyDaysAgo)
+          .limit(500);
 
         if (featureData && featureData.length > 0) {
           const featureCounts = featureData.reduce((acc, { feature_name }) => {
@@ -169,55 +109,36 @@ function AdminAnalytics() {
           newStats.featureUsage = Object.entries(featureCounts)
             .map(([name, count]) => ({ name, count }))
             .sort((a, b) => b.count - a.count)
-            .slice(0, 5);
+            .slice(0, 6);
         }
       } catch (err) {
         console.warn('Failed to load feature usage:', err);
       }
 
-      // 6. Get recent sessions
+      // 5. Recent Errors
       try {
-        const { data: recentSessions } = await queryWithTimeout(() =>
-          supabase
-            .from('user_sessions')
-            .select('session_id, user_id, session_start, last_activity, pages_visited, device_type')
-            .order('last_activity', { ascending: false })
-            .limit(5)
-        );
-        newStats.recentSessions = recentSessions || [];
-      } catch (err) {
-        console.warn('Failed to load recent sessions:', err);
-      }
-
-      // 7. Get recent errors
-      try {
-        const { data: recentErrors } = await queryWithTimeout(() =>
-          supabase
-            .from('error_logs')
-            .select('error_type, error_message, page_path, created_at')
-            .order('created_at', { ascending: false })
-            .limit(5)
-        );
+        const { data: recentErrors } = await supabase
+          .from('error_logs')
+          .select('error_type, error_message, page_path, created_at')
+          .order('created_at', { ascending: false })
+          .limit(5);
         newStats.recentErrors = recentErrors || [];
       } catch (err) {
         console.warn('Failed to load recent errors:', err);
       }
 
-      // 8. Get recent conversions
+      // 6. Recent Conversions
       try {
-        const { data: conversions } = await queryWithTimeout(() =>
-          supabase
-            .from('conversion_events')
-            .select('event_type, source_page, created_at')
-            .order('created_at', { ascending: false })
-            .limit(5)
-        );
+        const { data: conversions } = await supabase
+          .from('conversion_events')
+          .select('event_type, source_page, created_at')
+          .order('created_at', { ascending: false })
+          .limit(8);
         newStats.conversions = conversions || [];
       } catch (err) {
         console.warn('Failed to load conversions:', err);
       }
 
-      // Update state with all collected data
       setStats(newStats);
 
     } catch (error) {
@@ -228,16 +149,6 @@ function AdminAnalytics() {
     }
   };
 
-  // Format duration helper
-  const formatDuration = (seconds) => {
-    if (!seconds || seconds < 1) return '0s';
-    if (seconds < 60) return `${seconds}s`;
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
-  };
-
-  // Format time ago helper
   const timeAgo = (dateString) => {
     if (!dateString) return 'Unknown';
     try {
@@ -256,36 +167,16 @@ function AdminAnalytics() {
     }
   };
 
-  // Show access denied screen if not admin
   if (!isAdmin) {
     return (
-      <div className="admin-analytics" style={{ 
-        textAlign: 'center', 
-        padding: '50px',
-        minHeight: '100vh',
-        background: '#111827',
-        color: 'white'
-      }}>
-        <h1 style={{ fontSize: '48px', marginBottom: '20px' }}>🚫 Access Denied</h1>
-        <p style={{ fontSize: '18px', marginTop: '20px', color: '#9ca3af' }}>
-          You do not have permission to view this page.
-        </p>
-        <button 
-          onClick={() => navigate('/')} 
-          style={{
-            marginTop: '30px',
-            padding: '12px 24px',
-            fontSize: '16px',
-            background: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          Return to Dashboard
-        </button>
+      <div className="admin-analytics">
+        <div className="access-denied">
+          <h1>🚫 Access Denied</h1>
+          <p>You do not have permission to view this page.</p>
+          <button onClick={() => navigate('/')} className="btn-secondary">
+            Return to Dashboard
+          </button>
+        </div>
       </div>
     );
   }
@@ -293,9 +184,11 @@ function AdminAnalytics() {
   if (loading) {
     return (
       <div className="admin-analytics">
-        <h1>📊 Analytics Dashboard</h1>
-        <p>Loading analytics data...</p>
-        <p style={{ color: '#9ca3af', fontSize: '14px', marginTop: '10px' }}>This may take a few seconds...</p>
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <h2>📊 Loading Analytics...</h2>
+          <p>Gathering your app data...</p>
+        </div>
       </div>
     );
   }
@@ -303,152 +196,100 @@ function AdminAnalytics() {
   return (
     <div className="admin-analytics">
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <h1 style={{ margin: 0 }}>📊 Analytics Dashboard</h1>
-          <span style={{
-            display: 'inline-block',
-            background: '#22c55e',
-            color: 'white',
-            padding: '6px 14px',
-            borderRadius: '20px',
-            fontSize: '13px',
-            fontWeight: 'bold'
-          }}>
-            👨‍💼 ADMIN
-          </span>
+      <div className="admin-header">
+        <div className="header-left">
+          <h1>📊 Analytics Dashboard</h1>
+          <span className="admin-badge">ADMIN</span>
         </div>
         <button onClick={loadAnalytics} className="refresh-btn" disabled={loading}>
-          🔄 Refresh Data
+          <span className="refresh-icon">🔄</span>
+          Refresh Data
         </button>
       </div>
 
       {error && (
-        <div style={{ background: '#7f1d1d', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
+        <div className="error-banner">
           <strong>⚠️ Error:</strong> {error}
         </div>
       )}
       
       {/* Main Stats Grid */}
       <div className="stats-grid">
-        <div className="stat-card">
-          <h3>Total Users</h3>
-          <p className="stat-value">{stats.totalUsers}</p>
-          <span className="stat-label">All time</span>
+        <div className="stat-card stat-primary">
+          <div className="stat-icon">👥</div>
+          <div className="stat-content">
+            <span className="stat-label">Total Users</span>
+            <span className="stat-value">{stats.totalUsers}</span>
+            <span className="stat-sublabel">All time</span>
+          </div>
         </div>
 
-        <div className="stat-card">
-          <h3>Active Users</h3>
-          <p className="stat-value">{stats.activeUsers}</p>
-          <span className="stat-label">Last 30 days</span>
+        <div className="stat-card stat-success">
+          <div className="stat-icon">✨</div>
+          <div className="stat-content">
+            <span className="stat-label">Active Users</span>
+            <span className="stat-value">{stats.activeUsers}</span>
+            <span className="stat-sublabel">Last 30 days</span>
+          </div>
         </div>
 
-        <div className="stat-card">
-          <h3>New Signups</h3>
-          <p className="stat-value">{stats.newSignups}</p>
-          <span className="stat-label">Last 7 days</span>
-        </div>
-
-        <div className="stat-card">
-          <h3>Avg Session</h3>
-          <p className="stat-value">{formatDuration(stats.avgSessionDuration)}</p>
-          <span className="stat-label">Duration</span>
+        <div className="stat-card stat-info">
+          <div className="stat-icon">🎉</div>
+          <div className="stat-content">
+            <span className="stat-label">New Signups</span>
+            <span className="stat-value">{stats.newSignups}</span>
+            <span className="stat-sublabel">Last 7 days</span>
+          </div>
         </div>
       </div>
 
-      {/* Feature Usage Section */}
-      <div style={{ marginTop: '40px' }}>
-        <h2 style={{ marginBottom: '20px' }}>🎯 Feature Usage (Top 5)</h2>
-        <div className="stats-grid">
+      {/* Feature Usage */}
+      <div className="section">
+        <h2 className="section-title">🎯 Most Used Features</h2>
+        <div className="feature-grid">
           {stats.featureUsage.length > 0 ? (
             stats.featureUsage.map((feature, idx) => (
-              <div key={idx} className="stat-card">
-                <h3>{feature.name}</h3>
-                <p className="stat-value">{feature.count}</p>
-                <span className="stat-label">Uses</span>
+              <div key={idx} className="feature-card">
+                <div className="feature-header">
+                  <span className="feature-name">{feature.name}</span>
+                  <span className="feature-count">{feature.count}</span>
+                </div>
+                <div className="feature-bar">
+                  <div 
+                    className="feature-bar-fill" 
+                    style={{ 
+                      width: `${(feature.count / stats.featureUsage[0].count) * 100}%` 
+                    }}
+                  ></div>
+                </div>
               </div>
             ))
           ) : (
-            <div className="stat-card">
-              <p className="stat-label">No feature usage data yet</p>
+            <div className="empty-state">
+              <p>No feature usage data yet</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Device Stats */}
-      <div style={{ marginTop: '40px' }}>
-        <h2 style={{ marginBottom: '20px' }}>📱 Device Statistics</h2>
-        <div className="stats-grid">
-          <div className="stat-card">
-            <h3>🖥️ Desktop</h3>
-            <p className="stat-value">{stats.deviceStats.desktop}</p>
-            <span className="stat-label">Sessions</span>
-          </div>
-          <div className="stat-card">
-            <h3>📱 Mobile</h3>
-            <p className="stat-value">{stats.deviceStats.mobile}</p>
-            <span className="stat-label">Sessions</span>
-          </div>
-          <div className="stat-card">
-            <h3>📲 Tablet</h3>
-            <p className="stat-value">{stats.deviceStats.tablet}</p>
-            <span className="stat-label">Sessions</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div style={{ marginTop: '40px' }}>
-        <h2 style={{ marginBottom: '20px' }}>🔥 Recent Activity</h2>
-        <div style={{ background: '#1f2937', padding: '20px', borderRadius: '12px' }}>
-          {stats.recentSessions.length > 0 ? (
-            stats.recentSessions.map((session, idx) => (
-              <div key={idx} style={{ 
-                padding: '15px', 
-                borderBottom: idx < stats.recentSessions.length - 1 ? '1px solid #374151' : 'none'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <strong>{session.session_id ? session.session_id.substring(0, 8) + '...' : 'Unknown'}</strong>
-                    <span style={{ marginLeft: '10px', color: '#9ca3af' }}>|
-                      {session.device_type || 'Desktop'}
-                    </span>
-                  </div>
-                  <span style={{ color: '#9ca3af' }}>{timeAgo(session.last_activity)}</span>
+      {/* Recent Conversions */}
+      {stats.conversions.length > 0 && (
+        <div className="section">
+          <h2 className="section-title">🎉 Recent User Activity</h2>
+          <div className="activity-list">
+            {stats.conversions.map((conversion, idx) => (
+              <div key={idx} className="activity-item">
+                <div className="activity-icon">
+                  {conversion.event_type === 'signup' ? '✨' : 
+                   conversion.event_type === 'login' ? '🔑' : 
+                   conversion.event_type === 'signup_intent' ? '👀' : '📝'}
                 </div>
-                <div style={{ marginTop: '5px', color: '#9ca3af', fontSize: '14px' }}>
-                  Pages visited: {session.pages_visited || 0}
-                </div>
-              </div>
-            ))
-          ) : (
-            <p style={{ color: '#9ca3af' }}>No recent sessions</p>
-          )}
-        </div>
-      </div>
-
-      {/* Recent Errors */}
-      {stats.recentErrors.length > 0 && (
-        <div style={{ marginTop: '40px' }}>
-          <h2 style={{ marginBottom: '20px' }}>⚠️ Recent Errors</h2>
-          <div style={{ background: '#1f2937', padding: '20px', borderRadius: '12px' }}>
-            {stats.recentErrors.map((error, idx) => (
-              <div key={idx} style={{ 
-                padding: '15px', 
-                borderBottom: idx < stats.recentErrors.length - 1 ? '1px solid #374151' : 'none'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <strong style={{ color: '#ef4444' }}>{error.error_type || 'Unknown Error'}</strong>
-                    <div style={{ marginTop: '5px', color: '#9ca3af', fontSize: '14px' }}>
-                      {error.error_message || 'No message'}
-                    </div>
-                    <div style={{ marginTop: '3px', color: '#6b7280', fontSize: '12px' }}>
-                      Page: {error.page_path || 'Unknown'}
-                    </div>
+                <div className="activity-content">
+                  <div className="activity-main">
+                    <strong>{conversion.event_type}</strong>
+                    <span className="activity-meta">from {conversion.source_page || 'Unknown'}</span>
                   </div>
-                  <span style={{ color: '#9ca3af', fontSize: '14px' }}>{timeAgo(error.created_at)}</span>
+                  <span className="activity-time">{timeAgo(conversion.created_at)}</span>
                 </div>
               </div>
             ))}
@@ -456,25 +297,19 @@ function AdminAnalytics() {
         </div>
       )}
 
-      {/* Recent Conversions */}
-      {stats.conversions.length > 0 && (
-        <div style={{ marginTop: '40px' }}>
-          <h2 style={{ marginBottom: '20px' }}>🎉 Recent Conversions</h2>
-          <div style={{ background: '#1f2937', padding: '20px', borderRadius: '12px' }}>
-            {stats.conversions.map((conversion, idx) => (
-              <div key={idx} style={{ 
-                padding: '15px', 
-                borderBottom: idx < stats.conversions.length - 1 ? '1px solid #374151' : 'none'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <strong style={{ color: '#22c55e' }}>{conversion.event_type || 'Unknown'}</strong>
-                    <div style={{ marginTop: '5px', color: '#9ca3af', fontSize: '14px' }}>
-                      Source: {conversion.source_page || 'Unknown'}
-                    </div>
-                  </div>
-                  <span style={{ color: '#9ca3af', fontSize: '14px' }}>{timeAgo(conversion.created_at)}</span>
+      {/* Recent Errors */}
+      {stats.recentErrors.length > 0 && (
+        <div className="section">
+          <h2 className="section-title">⚠️ Recent Errors</h2>
+          <div className="error-list">
+            {stats.recentErrors.map((error, idx) => (
+              <div key={idx} className="error-item">
+                <div className="error-header">
+                  <strong className="error-type">{error.error_type || 'Unknown Error'}</strong>
+                  <span className="error-time">{timeAgo(error.created_at)}</span>
                 </div>
+                <div className="error-message">{error.error_message || 'No message'}</div>
+                <div className="error-page">Page: {error.page_path || 'Unknown'}</div>
               </div>
             ))}
           </div>
