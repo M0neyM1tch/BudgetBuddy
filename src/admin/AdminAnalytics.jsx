@@ -41,113 +41,140 @@ function AdminAnalytics() {
   }, [user, isAdmin]);
 
   const loadAnalytics = async () => {
+  try {
+    setLoading(true);
+    setError(null);
+
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const newStats = { ...stats };
+
+    // 1. Total Users - Use RPC to count ALL profiles
     try {
-      setLoading(true);
-      setError(null);
-
-      const now = new Date();
-      const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
-
-      const newStats = { ...stats };
-
-      // 1. Total Users
-      try {
-        const { data: userData } = await supabase
-          .from('transactions')
-          .select('user_id');
-        
-        if (userData && userData.length > 0) {
-          newStats.totalUsers = new Set(userData.map(t => t.user_id)).size;
-        }
-      } catch (err) {
-        console.warn('Failed to load total users:', err);
+      const { data: totalCount, error } = await supabase
+        .rpc('count_all_profiles');
+      
+      if (error) throw error;
+      
+      newStats.totalUsers = totalCount || 0;
+      console.log('✅ Total users loaded:', totalCount);
+    } catch (err) {
+      console.warn('Failed to load total users:', err);
+      
+      // Fallback to transactions count
+      const { data: userData } = await supabase
+        .from('transactions')
+        .select('user_id');
+      
+      if (userData && userData.length > 0) {
+        newStats.totalUsers = new Set(userData.map(t => t.user_id)).size;
       }
-
-      // 2. Active Users
-      try {
-        const { data: activeData } = await supabase
-          .from('transactions')
-          .select('user_id, created_at')
-          .gte('created_at', thirtyDaysAgo);
-        
-        if (activeData && activeData.length > 0) {
-          newStats.activeUsers = new Set(activeData.map(t => t.user_id)).size;
-        }
-      } catch (err) {
-        console.warn('Failed to load active users:', err);
-      }
-
-      // 3. New Signups
-      try {
-        const { data: newSignupsData } = await supabase
-          .from('conversion_events')
-          .select('id')
-          .eq('event_type', 'signup')
-          .gte('created_at', sevenDaysAgo);
-        newStats.newSignups = newSignupsData ? newSignupsData.length : 0;
-      } catch (err) {
-        console.warn('Failed to load new signups:', err);
-      }
-
-      // 4. Feature Usage
-      try {
-        const { data: featureData } = await supabase
-          .from('feature_usage')
-          .select('feature_name')
-          .gte('created_at', thirtyDaysAgo)
-          .limit(500);
-
-        if (featureData && featureData.length > 0) {
-          const featureCounts = featureData.reduce((acc, { feature_name }) => {
-            if (feature_name) {
-              acc[feature_name] = (acc[feature_name] || 0) + 1;
-            }
-            return acc;
-          }, {});
-
-          newStats.featureUsage = Object.entries(featureCounts)
-            .map(([name, count]) => ({ name, count }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 6);
-        }
-      } catch (err) {
-        console.warn('Failed to load feature usage:', err);
-      }
-
-      // 5. Recent Errors
-      try {
-        const { data: recentErrors } = await supabase
-          .from('error_logs')
-          .select('error_type, error_message, page_path, created_at')
-          .order('created_at', { ascending: false })
-          .limit(5);
-        newStats.recentErrors = recentErrors || [];
-      } catch (err) {
-        console.warn('Failed to load recent errors:', err);
-      }
-
-      // 6. Recent Conversions
-      try {
-        const { data: conversions } = await supabase
-          .from('conversion_events')
-          .select('event_type, source_page, created_at')
-          .order('created_at', { ascending: false })
-          .limit(8);
-        newStats.conversions = conversions || [];
-      } catch (err) {
-        console.warn('Failed to load conversions:', err);
-      }
-
-      setStats(newStats);
-
-    } catch (error) {
-      console.error('Analytics load error:', error);
-      setError(error.message);
-    } finally {
-      setLoading(false);
     }
-  };
+
+    // 2. Active Users - Users with ANY activity in last 30 days
+    try {
+      const activeUserIds = new Set();
+      
+      // Transactions
+      const { data: transactionUsers } = await supabase
+        .from('transactions')
+        .select('user_id')
+        .gte('created_at', thirtyDaysAgo);
+      transactionUsers?.forEach(t => t.user_id && activeUserIds.add(t.user_id));
+      
+      // Feature usage
+      const { data: featureUsers } = await supabase
+        .from('feature_usage')
+        .select('user_id')
+        .gte('created_at', thirtyDaysAgo);
+      featureUsers?.forEach(f => f.user_id && activeUserIds.add(f.user_id));
+      
+      // Conversions/logins
+      const { data: conversionUsers } = await supabase
+        .from('conversion_events')
+        .select('user_id')
+        .gte('created_at', thirtyDaysAgo);
+      conversionUsers?.forEach(c => c.user_id && activeUserIds.add(c.user_id));
+      
+      newStats.activeUsers = activeUserIds.size;
+      console.log('✅ Active users:', activeUserIds.size);
+    } catch (err) {
+      console.warn('Failed to load active users:', err);
+    }
+
+    // 3. New Signups
+    try {
+      const { data: newSignupsData } = await supabase
+        .from('conversion_events')
+        .select('id')
+        .eq('event_type', 'signup')
+        .gte('created_at', sevenDaysAgo);
+      newStats.newSignups = newSignupsData ? newSignupsData.length : 0;
+    } catch (err) {
+      console.warn('Failed to load new signups:', err);
+    }
+
+    // 4. Feature Usage
+    try {
+      const { data: featureData } = await supabase
+        .from('feature_usage')
+        .select('feature_name')
+        .gte('created_at', thirtyDaysAgo)
+        .limit(500);
+
+      if (featureData && featureData.length > 0) {
+        const featureCounts = featureData.reduce((acc, { feature_name }) => {
+          if (feature_name) {
+            acc[feature_name] = (acc[feature_name] || 0) + 1;
+          }
+          return acc;
+        }, {});
+
+        newStats.featureUsage = Object.entries(featureCounts)
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 6);
+      }
+    } catch (err) {
+      console.warn('Failed to load feature usage:', err);
+    }
+
+    // 5. Recent Errors
+    try {
+      const { data: recentErrors } = await supabase
+        .from('error_logs')
+        .select('error_type, error_message, page_path, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5);
+      newStats.recentErrors = recentErrors || [];
+    } catch (err) {
+      console.warn('Failed to load recent errors:', err);
+    }
+
+    // 6. Recent Conversions
+    try {
+      const { data: conversions } = await supabase
+        .from('conversion_events')
+        .select('event_type, source_page, created_at')
+        .order('created_at', { ascending: false })
+        .limit(8);
+      newStats.conversions = conversions || [];
+    } catch (err) {
+      console.warn('Failed to load conversions:', err);
+    }
+
+    setStats(newStats);
+
+  } catch (error) {
+    console.error('Analytics load error:', error);
+    setError(error.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const timeAgo = (dateString) => {
     if (!dateString) return 'Unknown';
