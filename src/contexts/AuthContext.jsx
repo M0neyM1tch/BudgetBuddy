@@ -13,73 +13,77 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Get admin emails from environment variable
-  // Supports multiple emails separated by commas
-  const getAdminEmails = () => {
-    const envAdmins = import.meta.env.VITE_ADMIN_EMAIL;
-    if (envAdmins) {
-      return envAdmins.split(',').map(email => email.trim());
+  // Helper function to check admin status from database
+  const checkAdminStatus = async (userId) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', userId)
+        .maybeSingle(); // Use maybeSingle instead of single to avoid errors if profile doesn't exist
+      
+      if (error) {
+        console.warn('Error checking admin status:', error.message);
+        return false;
+      }
+      
+      const isUserAdmin = profile?.is_admin === true;
+      if (isUserAdmin) {
+        console.log('✅ User is admin (verified from database)');
+      }
+      return isUserAdmin;
+    } catch (err) {
+      console.warn('Failed to check admin status:', err);
+      return false;
     }
-    // Fallback for backward compatibility (should set VITE_ADMIN_EMAIL in .env)
-    return [];
   };
 
   useEffect(() => {
     console.log('🚀 Auth initialization started');
     
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('✅ Session loaded:', session?.user?.email || 'No user');
-      setUser(session?.user ?? null);
-      
-      // Check admin status from DATABASE (not just email)
-      if (session?.user) {
-        try {
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('is_admin')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (!error && profile?.is_admin === true) {
-            setIsAdmin(true);
-            console.log('✅ User is admin (verified from database)');
-          } else {
-            setIsAdmin(false);
-          }
-        } catch (err) {
-          console.warn('Failed to check admin status:', err);
+    // Initialize auth state
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('✅ Session loaded:', session?.user?.email || 'No user');
+        
+        setUser(session?.user ?? null);
+        
+        // Check admin status only if user is logged in
+        if (session?.user) {
+          const adminStatus = await checkAdminStatus(session.user.id);
+          setIsAdmin(adminStatus);
+        } else {
           setIsAdmin(false);
         }
-      } else {
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+        setUser(null);
         setIsAdmin(false);
+      } finally {
+        // CRITICAL: Always set loading to false
+        setLoading(false);
+        console.log('✅ Auth initialization complete');
       }
-      
-      setLoading(false);
-    });
+    };
 
+    initAuth();
 
+    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log('🔔 Auth state changed:', _event);
+      
       setUser(session?.user ?? null);
       
-      // Check admin from database
+      // Check admin status
       if (session?.user) {
-        try {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('is_admin')
-            .eq('id', session.user.id)
-            .single();
-          
-          setIsAdmin(profile?.is_admin === true);
-        } catch (err) {
-          setIsAdmin(false);
-        }
+        const adminStatus = await checkAdminStatus(session.user.id);
+        setIsAdmin(adminStatus);
       } else {
         setIsAdmin(false);
       }
       
+      // Ensure loading is false after state change
       setLoading(false);
     });
 
