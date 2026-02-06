@@ -28,32 +28,54 @@ export function AuthProvider({ children }) {
     console.log('🚀 Auth initialization started');
     
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       console.log('✅ Session loaded:', session?.user?.email || 'No user');
       setUser(session?.user ?? null);
       
-      // Admin check using environment variable
-      const adminEmails = getAdminEmails();
-      if (session?.user?.email && adminEmails.includes(session.user.email)) {
-        setIsAdmin(true);
-        console.log('✅ User is admin');
+      // Check admin status from DATABASE (not just email)
+      if (session?.user) {
+        try {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (!error && profile?.is_admin === true) {
+            setIsAdmin(true);
+            console.log('✅ User is admin (verified from database)');
+          } else {
+            setIsAdmin(false);
+          }
+        } catch (err) {
+          console.warn('Failed to check admin status:', err);
+          setIsAdmin(false);
+        }
       } else {
         setIsAdmin(false);
       }
       
       setLoading(false);
-      console.log('✅ Auth complete, loading=false');
     });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log('🔔 Auth state changed:', _event);
       setUser(session?.user ?? null);
       
-      // Check admin status
-      const adminEmails = getAdminEmails();
-      if (session?.user?.email && adminEmails.includes(session.user.email)) {
-        setIsAdmin(true);
+      // Check admin from database
+      if (session?.user) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', session.user.id)
+            .single();
+          
+          setIsAdmin(profile?.is_admin === true);
+        } catch (err) {
+          setIsAdmin(false);
+        }
       } else {
         setIsAdmin(false);
       }
