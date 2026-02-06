@@ -13,27 +13,36 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Helper function to check admin status from database
+  // Helper function to check admin status
   const checkAdminStatus = async (userId) => {
     try {
+      console.log('🔍 Checking admin status for user:', userId);
+      
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('is_admin')
         .eq('id', userId)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid errors if profile doesn't exist
+        .maybeSingle(); // Won't throw error if profile doesn't exist
       
       if (error) {
-        console.warn('Error checking admin status:', error.message);
+        console.warn('⚠️ Error checking admin status:', error.message);
         return false;
       }
       
-      const isUserAdmin = profile?.is_admin === true;
+      if (!profile) {
+        console.warn('⚠️ No profile found for user');
+        return false;
+      }
+      
+      const isUserAdmin = profile.is_admin === true;
       if (isUserAdmin) {
         console.log('✅ User is admin (verified from database)');
+      } else {
+        console.log('ℹ️ User is not admin');
       }
       return isUserAdmin;
     } catch (err) {
-      console.warn('Failed to check admin status:', err);
+      console.error('❌ Failed to check admin status:', err);
       return false;
     }
   };
@@ -44,9 +53,14 @@ export function AuthProvider({ children }) {
     // Initialize auth state
     const initAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log('✅ Session loaded:', session?.user?.email || 'No user');
+        const { data: { session }, error } = await supabase.auth.getSession();
         
+        if (error) {
+          console.error('❌ Error getting session:', error);
+          throw error;
+        }
+        
+        console.log('✅ Session loaded:', session?.user?.email || 'No user');
         setUser(session?.user ?? null);
         
         // Check admin status only if user is logged in
@@ -57,13 +71,13 @@ export function AuthProvider({ children }) {
           setIsAdmin(false);
         }
       } catch (err) {
-        console.error('Error initializing auth:', err);
+        console.error('❌ Error initializing auth:', err);
         setUser(null);
         setIsAdmin(false);
       } finally {
-        // CRITICAL: Always set loading to false
+        // CRITICAL: Always set loading to false, no matter what
+        console.log('✅ Auth initialization complete, setting loading=false');
         setLoading(false);
-        console.log('✅ Auth initialization complete');
       }
     };
 
@@ -77,17 +91,22 @@ export function AuthProvider({ children }) {
       
       // Check admin status
       if (session?.user) {
-        const adminStatus = await checkAdminStatus(session.user.id);
-        setIsAdmin(adminStatus);
+        try {
+          const adminStatus = await checkAdminStatus(session.user.id);
+          setIsAdmin(adminStatus);
+        } catch (err) {
+          console.error('❌ Error in auth state change:', err);
+          setIsAdmin(false);
+        }
       } else {
         setIsAdmin(false);
       }
-      
-      // Ensure loading is false after state change
-      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('🧹 Cleaning up auth subscription');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const register = async (name, email, password) => {
@@ -100,7 +119,6 @@ export function AuthProvider({ children }) {
     });
     if (error) throw error;
     
-    // Tracking happens in Auth.jsx after successful signup
     return data;
   };
 
@@ -111,7 +129,7 @@ export function AuthProvider({ children }) {
     });
     if (error) throw error;
     
-    // Track successful login conversion
+    // Track successful login
     if (data?.user) {
       trackConversion('login', '/login', {
         login_method: 'password',
@@ -127,8 +145,6 @@ export function AuthProvider({ children }) {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     setIsAdmin(false);
-    
-    // Note: Logout event tracking happens in BudgetBuddy.jsx handleLogout
   };
 
   const value = {
