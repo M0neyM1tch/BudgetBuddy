@@ -51,19 +51,18 @@ function AdminAnalytics() {
 
       const newStats = { ...stats };
 
-      // 1. Total Users (from profiles table)
+      // 1. Total Users (using admin function to bypass RLS)
       try {
-        const { count, error } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
+        const { data: count, error } = await supabase.rpc('admin_count_profiles');
         
         if (error) {
-          console.warn('Error loading total users from profiles:', error);
+          console.warn('Error loading total users:', error);
           throw error;
         }
         newStats.totalUsers = count || 0;
+        console.log('✅ Total users loaded:', count);
       } catch (err) {
-        console.warn('Failed to load total users:', err);
+        console.error('Failed to load total users:', err);
         // Fallback: count unique users from transactions
         try {
           const { data: userData } = await supabase
@@ -72,11 +71,14 @@ function AdminAnalytics() {
           
           if (userData && userData.length > 0) {
             newStats.totalUsers = new Set(userData.map(t => t.user_id)).size;
+            console.log('✅ Total users loaded (fallback):', newStats.totalUsers);
           }
         } catch (fallbackErr) {
           console.warn('Fallback failed:', fallbackErr);
+          newStats.totalUsers = 0;
         }
       }
+
 
 
       // 2. Active Users
